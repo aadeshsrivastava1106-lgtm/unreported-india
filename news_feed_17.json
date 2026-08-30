@@ -1,10 +1,8 @@
-[
-  {
-    "title": "Malaria outbreak in Balaghat, death toll rise to 28+",
-    "source": "Muskan Informs",
-    "urgency_score": 9,
-    "ground_truth": "A severe malaria outbreak is occurring in the Balaghat district of Madhya Pradesh, India, with the death toll rising to over 28, heavily affecting the local Adivasi (indigenous) community.",
-    "official_record": "The report features an embedded video feed (ID: NF6rgn6Ln3g) compiled from grassroots sources via FetchRSS, indicating a critical public health crisis with rising casualties in the region.",
-    "context_gap": "The reporting lacks detailed official statistics on the exact breakdown of cases, the specific malaria strain causing the outbreak, the status of local medical infrastructure, and the government's targeted intervention efforts to contain the spread among the vulnerable Adivasi population."
-  }
-]
+{
+  "title": "Malaria outbreak in Balaghat, death toll rise to 28+",
+  "source": "Muskan Informs",
+  "urgency_score": 9,
+  "ground_truth": "A malaria outbreak in Balaghat has resulted in over 28 deaths.",
+  "official_record": "The video reports on a malaria outbreak in Balaghat, Madhya Pradesh, with a rising death toll exceeding 28. The description includes an embedded YouTube video link for further details.",
+  "context_gap": "The report lacks specific details regarding the timeline of the outbreak, the affected villages or areas within Balaghat, the demographics of the deceased, and any official response or measures taken by local health authorities to control the outbreak. It also doesn't mention the type of malaria or the availability of medical resources."
+}
