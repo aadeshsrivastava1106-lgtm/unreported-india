@@ -1,25 +1,23 @@
 {
-  "title": "Balaghat Malaria Outbreak : Baiga community plea to CM Mohan Yadav. #cmmohanyadav #balaghat #adiwasi",
-  "source": "https://www.youtube.com/watch?v=9nl2UA6HHm4",
-  "urgency_score": 9.2,
+  "title": "Malaria outbreak in Balaghat, death toll rise to 28+ #balaghat #adiwasi #malaria #madhyapradesh",
+  "source": "https://www.youtube.com/watch?v=NF6rgn6Ln3g",
+  "urgency_score": 9,
   "ground_truth": {
     "local_death_toll": 25,
-    "systemic_issues": [
-      "Missing nutrition rations for the vulnerable Baiga community",
-      "Consumption of contaminated stream water due to lack of safe drinking infrastructure"
-    ],
-    "community_status": "Severe distress, direct appeal to Chief Minister Mohan Yadav for urgent intervention"
+    "systemic_factors": [
+      "missing nutrition rations",
+      "contaminated stream water"
+    ]
   },
   "official_record": {
     "official_death_toll": 8,
-    "sanitation_and_supplies": "Unacknowledged or reported as stable, with no official systemic link established between missing food rations, contaminated stream water, and the spike in malaria-related mortality"
+    "source": "Balaghat government official statements"
   },
   "context_gap": {
-    "mortality_underreporting": 17,
-    "critical_omissions": [
-      "Failure to address the breakdown of the public distribution system (nutrition rations) in the tribal belt",
-      "Failure to acknowledge that contaminated local streams are the primary drinking water source, compounding immunological vulnerability to malaria",
-      "Official suppression of the actual scale of the epidemic within the vulnerable Baiga indigenous community"
+    "death_toll_discrepancy": "The video claims 28+ deaths, which overreports the official government record (8 deaths) by 20, and overreports the local ground truth (25 deaths) by 3.",
+    "missing_critical_context": [
+      "The video fails to report on the missing nutrition rations which has compromised community immunity.",
+      "The video omits the consumption of contaminated stream water, a primary driver of the local health crisis alongside the malaria outbreak."
     ]
   }
 }
