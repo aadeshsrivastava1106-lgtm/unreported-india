@@ -75,8 +75,16 @@ OUTPUT_PATH = "news_feed.json"
 SECONDS_BETWEEN_CALLS = 2
 
 # ----------------------------------------------------------------------------
-# Extraction Logic
+# Extraction & Cleaning Logic
 # ----------------------------------------------------------------------------
+
+def clean_json_response(raw_text):
+    """Strips Markdown code blocks and extracts raw JSON."""
+    # Find the first '{' and the last '}' to ignore Markdown formatting or extra text
+    match = re.search(r"(\{.*\}|\[.*\])", raw_text, re.DOTALL)
+    if match:
+        return match.group(1)
+    return raw_text
 
 def extract_video_data(url):
     """Attempt to fetch live data; return None if blocked or error."""
@@ -114,7 +122,7 @@ def analyze_with_gemini(client, report_text, official_text):
     5. missing: List 3 specific things the official report is ignoring or undercounting.
     6. severity: Rate urgency from 1 (low) to 5 (critical).
     
-    Return valid JSON ONLY.
+    Return valid JSON ONLY. Do not use Markdown tags.
     """
     
     response = client.models.generate_content(
@@ -125,7 +133,9 @@ def analyze_with_gemini(client, report_text, official_text):
             temperature=0.1,
         ),
     )
-    return json.loads(response.text)
+    
+    cleaned_json = clean_json_response(response.text)
+    return json.loads(cleaned_json)
 
 # ----------------------------------------------------------------------------
 # Formatting
@@ -154,12 +164,12 @@ def build_news_feed():
 
     for i, source in enumerate(INDEPENDENT_SOURCES):
         # 1. Attempt Live Fetch
-        print(f"[{i+1}] Attempting live fetch: {source['url']}")
+        print(f"[{i+1}] Fetching: {source['url']}")
         data = extract_video_data(source["url"])
         
         # 2. Fallback if Blocked
         if not data:
-            print(f"    ! Live fetch blocked/failed. Using Ground Data Fallback [{i}].")
+            print(f"    ! YouTube blocked fetch. Injecting Fallback Ground Data [{i}].")
             fallback = GROUND_DATA_FALLBACK[i % len(GROUND_DATA_FALLBACK)]
             data = {
                 "id": f"fallback-{i}",
@@ -175,7 +185,7 @@ def build_news_feed():
 
         # 3. Analyze with AI
         try:
-            print(f"    > Analyzing discrepancies with Gemini...")
+            print(f"    > AI Analysis in progress...")
             analysis = analyze_with_gemini(client, data["transcript"], OFFICIAL_PRESS_RELEASES)
             
             entries.append({
@@ -192,13 +202,13 @@ def build_news_feed():
             })
             time.sleep(SECONDS_BETWEEN_CALLS)
         except Exception as e:
-            print(f"    ! Analysis failed: {e}")
+            print(f"    ! Error parsing AI response for entry {i}: {e}")
 
     # 4. Save Final JSON
     with open(OUTPUT_PATH, "w", encoding="utf-8") as f:
         json.dump(entries, f, ensure_ascii=False, indent=2)
     
-    print(f"\nSUCCESS: {len(entries)} entries saved to {OUTPUT_PATH}")
+    print(f"\nCOMPLETED: {len(entries)} entries saved to {OUTPUT_PATH}")
 
 if __name__ == "__main__":
     build_news_feed()
