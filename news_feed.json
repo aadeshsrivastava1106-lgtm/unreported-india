@@ -1,1 +1,18 @@
-[]
+{
+  "title": "Malaria outbreak in Balaghat, death toll rise to 28+ #balaghat #adiwasi #malaria #madhyapradesh",
+  "source": "https://www.youtube.com/watch?v=NF6rgn6Ln3g",
+  "urgency_score": 9,
+  "ground_truth": {
+    "local_deaths": 25,
+    "environmental_factors": "Contaminated stream water consumption",
+    "systemic_failures": "Missing nutrition rations in the affected tribal areas"
+  },
+  "official_record": {
+    "official_deaths": 8,
+    "status": "Underreported compared to local/community estimates"
+  },
+  "context_gap": {
+    "death_toll_variance": "The video claims a death toll of 28+, which exceeds the local community estimate of 25 and significantly conflicts with the official government figure of 8 deaths.",
+    "root_cause_omissions": "The video focuses narrowly on the malaria infection itself, completely omitting critical systemic and environmental drivers of the high mortality rate, specifically the disruption of government nutrition rations and widespread reliance on contaminated stream water."
+  }
+}
