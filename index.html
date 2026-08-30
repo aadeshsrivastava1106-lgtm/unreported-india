@@ -1,0 +1,438 @@
+import React, { useState } from "react";
+import {
+  MapPin,
+  Clock,
+  FileWarning,
+  AlertTriangle,
+  ShieldAlert,
+  Radio,
+  Rss,
+} from "lucide-react";
+
+/* ============================================================================
+ * UNREPORTED INDIA — architecture notes
+ * ----------------------------------------------------------------------------
+ * Purpose
+ *   A split-screen accountability dashboard. The left panel is a
+ *   chronological feed of independent, ground-level reporting. Selecting a
+ *   story loads the right panel: the matching official state statement,
+ *   plus a structured list of what that statement omits or contradicts.
+ *
+ * Data model (see `mockFeed` below)
+ *   Each feed entry pairs one independent story with one official
+ *   statement and a `missing` array of discrepancy points. In production,
+ *   `mockFeed` would be replaced by a fetch to a CMS / verification
+ *   pipeline that keeps independent reports and official releases linked
+ *   by story id — the component below does not care where the array comes
+ *   from, only that each item has this shape.
+ *
+ * State
+ *   Exactly one piece of state: `selectedId`. Everything else derives from
+ *   it. This keeps the two panels trivially reproducible/shareable (e.g.
+ *   `selectedId` maps cleanly to a URL param if this were routed).
+ *
+ * Extensibility
+ *   - Swap `mockFeed` for a fetched array with the same shape.
+ *   - `severity` (1-5) drives the "gap" meter and could later be computed
+ *     server-side from the count/weight of verified discrepancies.
+ *   - The layout is a single responsive grid: two columns on md+, stacked
+ *     on mobile, so the right panel simply follows the left on small
+ *     screens rather than requiring a separate mobile view.
+ *
+ * IMPORTANT — this file ships with fabricated placeholder data
+ *   The Balaghat malaria-crisis entries below are illustrative mock data
+ *   written to demonstrate the UI, not verified reporting. A persistent
+ *   banner in the rendered app says so; do not remove it if you repurpose
+ *   this file with real content until real, sourced content replaces the
+ *   mock entries.
+ * ==========================================================================*/
+
+const mockFeed = [
+  {
+    id: "e6",
+    date: "3 Oct",
+    reporter: "A. Mehra",
+    location: "Balaghat district",
+    severity: 5,
+    headline:
+      "After three weeks of ground reporting, state deploys mobile medical camps to worst-hit hamlets",
+    body:
+      "Camp locations announced this week match, hamlet for hamlet, the sites named in independent reports since mid-September.",
+    official:
+      "\u201cA routine seasonal health campaign has been rolled out across the district as per the annual calendar.\u201d",
+    officialSource: "State Health Dept. \u2014 Press Note, 3 Oct",
+    missing: [
+      "The camp locations match the exact hamlets named in independent reports over the prior three weeks \u2014 not a routine, pre-planned rotation.",
+      "No acknowledgment of the earlier drug stock-outs, spraying gaps, or language-access issues raised in ground reporting.",
+      "The \u201cannual calendar\u201d cited was not published or publicly available before this release.",
+    ],
+  },
+  {
+    id: "e5",
+    date: "27 Sep",
+    reporter: "S. Netam",
+    location: "Kirnapur block",
+    severity: 4,
+    headline: "Sub-centre logbook shows anti-malarial drugs out of stock for 12 days",
+    body:
+      "A logbook photographed at the Kirnapur sub-centre records a stock-out entry twelve days before the district's public statement.",
+    official: "\u201cAdequate stock of essential medicines is being maintained at all health facilities.\u201d",
+    officialSource: "District Health Dept. \u2014 Press Note, 27 Sep",
+    missing: [
+      "The stock report cited by officials was last updated three weeks before this statement was issued.",
+      "The nearest alternate stockist is over two hours away by shared jeep, with no free transport arranged.",
+      "No facility-level breakdown was published alongside the district-wide \u201cadequate stock\u201d claim.",
+    ],
+  },
+  {
+    id: "e4",
+    date: "24 Sep",
+    reporter: "R. Uikey",
+    location: "Baihar block",
+    severity: 3,
+    headline: "With the clinic shut past noon, parents say children are missing weeks of school",
+    body:
+      "The only sub-centre serving three hamlets closes at 1pm due to staff shortage, pushing families toward informal remedies.",
+    official: "\u201cSeasonal absenteeism is being monitored; attendance remains within normal range for the quarter.\u201d",
+    officialSource: "District Education Office \u2014 Quarterly Note, 24 Sep",
+    missing: [
+      "Attendance figures are aggregated at district level, which masks a sharper dip in the three affected hamlets.",
+      "No staffing data was released on why the sub-centre operates only half-days.",
+      "The statement does not break out how many absences are linked to fever-related illness specifically.",
+    ],
+  },
+  {
+    id: "e3",
+    date: "21 Sep",
+    reporter: "A. Mehra",
+    location: "Paraswada block",
+    severity: 3,
+    headline: "Health workers can't explain symptoms to patients who don't speak Hindi",
+    body:
+      "Baiga is the first language for most affected households; the fever treatment camp has no interpreter on staff.",
+    official: "No state or district release this month addresses language access at treatment camps.",
+    officialSource: "Review of public releases, 1\u201321 Sep",
+    missing: [
+      "No interpreter has been posted at the Paraswada block fever camp despite Baiga being the dominant first language.",
+      "Consent-for-treatment forms are printed only in Hindi and English.",
+      "No release acknowledges language access as a factor in delayed or refused treatment.",
+    ],
+  },
+  {
+    id: "e2",
+    date: "18 Sep",
+    reporter: "S. Netam",
+    location: "Lanji block",
+    severity: 4,
+    headline: "Villagers say anti-malarial spraying never reached three flood-cut hamlets",
+    body:
+      "Residents describe a fogging team that turned back at a washed-out footbridge and never returned.",
+    official: "\u201cThe vector control drive has been completed across all blocks of the district as per schedule.\u201d",
+    officialSource: "District Health Dept. \u2014 Press Note, 18 Sep",
+    missing: [
+      "The spraying log cites \u201c100% coverage\u201d but does not list the three affected hamlets by name.",
+      "Those hamlets are reachable only by a seasonal footbridge, washed out since the August rains.",
+      "No revised spraying date has been communicated to residents as of this report.",
+    ],
+  },
+  {
+    id: "e1",
+    date: "14 Sep",
+    reporter: "R. Uikey",
+    location: "Baihar block",
+    severity: 5,
+    headline: "Fever deaths in a Baiga hamlet go uncounted for a week before a health team arrives",
+    body:
+      "Ground reporting over nine days recorded a toll the district statement does not reflect.",
+    official: "\u201cAn isolated case of seasonal fever was reported and has been immediately contained. There is no cause for public concern.\u201d",
+    officialSource: "District Health Dept. \u2014 Press Note, 14 Sep",
+    missing: [
+      "Official count: 1 case. Village testimony gathered over nine days: 4 deaths, 11 hospitalisations.",
+      "The nearest primary health centre is 19 km away by forest track; it has had no rapid diagnostic kits since July.",
+      "No Baiga-speaking health worker was included in the response team sent to the hamlet.",
+    ],
+  },
+];
+
+function SeverityMeter({ level }) {
+  return (
+    <div className="flex items-center gap-1" aria-label={`Gap severity ${level} of 5`}>
+      {[1, 2, 3, 4, 5].map((n) => (
+        <span
+          key={n}
+          className="severity-dot"
+          style={{ opacity: n <= level ? 1 : 0.22 }}
+        />
+      ))}
+    </div>
+  );
+}
+
+function FeedItem({ item, active, onSelect }) {
+  return (
+    <button
+      onClick={() => onSelect(item.id)}
+      className={`feed-item w-full text-left px-4 py-4 md:px-5 md:py-5 ${active ? "feed-item-active" : ""}`}
+    >
+      <div className="flex items-center justify-between gap-3 mb-2">
+        <div className="flex items-center gap-3 meta-row">
+          <span className="meta-mono flex items-center gap-1">
+            <Clock size={12} strokeWidth={2} />
+            {item.date}
+          </span>
+          <span className="meta-mono flex items-center gap-1">
+            <MapPin size={12} strokeWidth={2} />
+            {item.location}
+          </span>
+        </div>
+        <SeverityMeter level={item.severity} />
+      </div>
+      <h3 className="headline-font text-xl md:text-2xl leading-tight mb-1">{item.headline}</h3>
+      <p className="body-copy text-sm mb-2">{item.body}</p>
+      <div className="meta-mono text-xs byline">Field report \u2014 {item.reporter}</div>
+    </button>
+  );
+}
+
+function OfficialBox({ item }) {
+  return (
+    <div className="official-box relative px-5 py-5 md:px-6 md:py-6">
+      <div className="stamp">UNVERIFIED CLAIM</div>
+      <div className="flex items-center gap-2 meta-mono text-xs uppercase tracking-wide mb-3 official-label">
+        <FileWarning size={14} strokeWidth={2} />
+        Official statement
+      </div>
+      <p className="official-quote">{item.official}</p>
+      <div className="meta-mono text-xs mt-3 official-source">{item.officialSource}</div>
+    </div>
+  );
+}
+
+function MissingList({ item }) {
+  return (
+    <div className="px-5 py-5 md:px-6 md:py-6">
+      <div className="flex items-center gap-2 meta-mono text-xs uppercase tracking-wide mb-4 missing-label">
+        <AlertTriangle size={14} strokeWidth={2} />
+        What the statement leaves out
+      </div>
+      <ul className="flex flex-col gap-4">
+        {item.missing.map((point, i) => (
+          <li key={i} className="flex items-start gap-3">
+            <span className="redaction-mark" aria-hidden="true" />
+            <span className="body-copy text-sm">{point}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export default function UnreportedIndia() {
+  const [selectedId, setSelectedId] = useState(mockFeed[0].id);
+  const selected = mockFeed.find((f) => f.id === selectedId) || mockFeed[0];
+
+  return (
+    <div className="ui-app flex flex-col min-h-screen">
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap');
+
+        .ui-app {
+          --paper: #E7E3D6;
+          --paper-alt: #DDD8C7;
+          --ink: #22241F;
+          --ink-soft: #5B5C50;
+          --line: #C7C0A9;
+          --teal: #2E6E63;
+          --teal-dark: #1E4B43;
+          --rust: #8B3A2B;
+          --ochre: #A97323;
+          background: var(--paper);
+          color: var(--ink);
+          font-family: 'IBM Plex Sans', sans-serif;
+        }
+        .headline-font {
+          font-family: 'Barlow Condensed', sans-serif;
+          font-weight: 700;
+          letter-spacing: -0.01em;
+        }
+        .body-copy { color: var(--ink-soft); line-height: 1.5; }
+        .meta-mono {
+          font-family: 'IBM Plex Mono', monospace;
+          color: var(--ink-soft);
+          letter-spacing: 0.02em;
+        }
+        .meta-row .meta-mono { color: var(--teal-dark); }
+
+        .masthead {
+          background: var(--ink);
+          color: var(--paper);
+        }
+        .masthead-title {
+          font-family: 'Special Elite', monospace;
+          letter-spacing: 0.03em;
+        }
+        .masthead-sub { color: #C9C3AE; }
+
+        .disclaimer {
+          background: var(--ochre);
+          color: #241C0A;
+          font-family: 'IBM Plex Mono', monospace;
+          letter-spacing: 0.02em;
+        }
+
+        .panel { background: var(--paper); }
+        .panel-right { background: var(--paper-alt); border-left: 1px solid var(--line); }
+        .panel-header {
+          font-family: 'Special Elite', monospace;
+          font-size: 0.72rem;
+          text-transform: uppercase;
+          letter-spacing: 0.12em;
+          color: var(--ink);
+          border-bottom: 1px solid var(--line);
+          padding: 0.85rem 1.25rem;
+        }
+
+        .feed-item {
+          border-bottom: 1px solid var(--line);
+          border-left: 3px solid transparent;
+          background: transparent;
+          transition: background 0.15s ease, border-color 0.15s ease;
+          cursor: pointer;
+        }
+        .feed-item:hover { background: rgba(46, 110, 99, 0.06); }
+        .feed-item-active {
+          background: rgba(46, 110, 99, 0.10);
+          border-left: 3px solid var(--teal);
+        }
+        .byline { color: var(--teal-dark); }
+
+        .severity-dot {
+          width: 6px;
+          height: 6px;
+          border-radius: 999px;
+          background: var(--rust);
+          display: inline-block;
+        }
+
+        .official-box {
+          background: #F1EEE2;
+          border: 1px solid var(--line);
+          border-top: 3px solid var(--ochre);
+          margin: 1.25rem 1.25rem 0 1.25rem;
+          border-radius: 2px;
+        }
+        .official-label { color: var(--ink-soft); }
+        .official-quote {
+          font-family: 'IBM Plex Sans', sans-serif;
+          font-style: italic;
+          font-size: 0.98rem;
+          line-height: 1.55;
+          color: var(--ink);
+        }
+        .official-source { color: var(--ink-soft); }
+
+        .stamp {
+          position: absolute;
+          top: 0.9rem;
+          right: 1rem;
+          font-family: 'Special Elite', monospace;
+          font-size: 0.62rem;
+          letter-spacing: 0.08em;
+          color: var(--rust);
+          border: 1.5px solid var(--rust);
+          padding: 0.2rem 0.5rem;
+          border-radius: 2px;
+          transform: rotate(-6deg);
+          opacity: 0.75;
+        }
+
+        .missing-label { color: var(--rust); }
+
+        .redaction-mark {
+          flex-shrink: 0;
+          margin-top: 0.4rem;
+          width: 16px;
+          height: 0.85em;
+          background: var(--rust);
+          border-radius: 2px;
+        }
+
+        .content-fade {
+          animation: fadeSlide 0.25s ease;
+        }
+        @keyframes fadeSlide {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .content-fade { animation: none; }
+          .feed-item { transition: none; }
+        }
+      `}</style>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Masthead                                                          */}
+      {/* ---------------------------------------------------------------- */}
+      <header className="masthead px-5 py-4 md:px-8 md:py-5 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Radio size={22} strokeWidth={1.75} />
+          <div>
+            <div className="masthead-title text-lg md:text-xl">UNREPORTED INDIA</div>
+            <div className="masthead-sub text-xs meta-mono">Ground reporting, checked against the official record</div>
+          </div>
+        </div>
+        <div className="hidden md:flex items-center gap-2 masthead-sub text-xs meta-mono">
+          <ShieldAlert size={14} />
+          Case file: Balaghat, seasonal fever response
+        </div>
+      </header>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Mock-data disclaimer \u2014 keep visible                              */}
+      {/* ---------------------------------------------------------------- */}
+      <div className="disclaimer px-5 py-2 md:px-8 text-xs">
+        SIMULATED DATA \u2014 the Balaghat entries below are fabricated for this prototype and do not describe verified real events.
+      </div>
+
+      {/* ---------------------------------------------------------------- */}
+      {/* Split-screen body                                                 */}
+      {/* ---------------------------------------------------------------- */}
+      <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2">
+        <section className="panel flex flex-col min-h-0">
+          <div className="panel-header flex items-center gap-2">
+            <Rss size={13} />
+            Independent feed \u2014 most recent first
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            {mockFeed.map((item) => (
+              <FeedItem
+                key={item.id}
+                item={item}
+                active={item.id === selectedId}
+                onSelect={setSelectedId}
+              />
+            ))}
+          </div>
+        </section>
+
+        <section className="panel-right flex flex-col min-h-0">
+          <div className="panel-header flex items-center gap-2">
+            <AlertTriangle size={13} />
+            Context gap for selected story
+          </div>
+          <div className="flex-1 min-h-0 overflow-y-auto">
+            <div key={selected.id} className="content-fade pb-6">
+              <OfficialBox item={selected} />
+              <MissingList item={selected} />
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="px-5 py-3 md:px-8 meta-mono text-xs" style={{ borderTop: "1px solid var(--line)", color: "var(--ink-soft)" }}>
+        Prototype build \u2014 replace mockFeed with a live source to go to production.
+      </footer>
+    </div>
+  );
+}
