@@ -1,73 +1,301 @@
-<!DOCTYPE html>
+
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unreported India | Dashboard</title>
+<title>Unreported India &mdash; Ground Signal, Direct Feed</title>
+<meta name="description" content="Rapid-alert dashboard surfacing underreported rural and human rights stories from independent on-ground video journalists across India.">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          ink: '#0D110D',
+          panel: '#171B16',
+          'panel-border': '#2A2F27',
+          paper: '#E8E4D8',
+          muted: '#8B9186',
+          'signal-amber': '#E8A33D',
+          'signal-red': '#D64545',
+          'signal-green': '#5FA777',
+          'wire-teal': '#4FB6A8',
+        },
+        fontFamily: {
+          display: ['"Barlow Condensed"', 'sans-serif'],
+          mono: ['"IBM Plex Mono"', 'monospace'],
+          body: ['"IBM Plex Sans"', 'sans-serif'],
+        },
+      },
+    },
+  };
+</script>
+
 <style>
-  :root { --paper: #E7E3D6; --paper-alt: #DDD8C7; --ink: #22241F; --ink-soft: #5B5C50; --line: #C7C0A9; --teal: #2E6E63; --rust: #8B3A2B; --ochre: #A97323; }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  .headline-font { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
-  .meta-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; }
-  header { background: var(--ink); color: var(--paper); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; border-bottom: 3px solid var(--ochre); }
-  .disclaimer-strip { background: var(--rust); color: #fff; padding: 0.4rem 1.5rem; font-size: 0.7rem; text-transform: uppercase; font-family: 'IBM Plex Mono'; }
-  main { flex: 1; display: grid; grid-template-columns: 420px 1fr; overflow: hidden; }
-  .panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--line); }
-  .panel-header { padding: 0.8rem 1.25rem; background: var(--paper-alt); border-bottom: 1px solid var(--line); font-family: 'Special Elite'; font-size: 0.85rem; }
-  .scroll-area { flex: 1; overflow-y: auto; }
-  .feed-item { padding: 1.5rem; border-bottom: 1px solid var(--line); cursor: pointer; transition: 0.2s; background: none; border: none; border-left: 6px solid transparent; width: 100%; text-align: left; }
-  .feed-item.active { background: #fff; border-left-color: var(--teal); }
-  .feed-item h3 { margin: 0.5rem 0; font-size: 1.4rem; line-height: 1.1; }
-  .severity-meter { display: flex; gap: 3px; }
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rust); }
-  .context-wrapper { padding: 2.5rem; max-width: 900px; }
-  .official-card { background: #fff; border: 1px solid var(--line); border-top: 6px solid var(--ochre); padding: 2rem; position: relative; margin-bottom: 2.5rem; }
-  .stamp { position: absolute; top: 15px; right: 15px; border: 2px solid var(--rust); color: var(--rust); font-family: 'Special Elite'; padding: 4px 10px; font-size: 0.75rem; transform: rotate(-3deg); }
-  .gap-item { display: flex; gap: 1.5rem; margin-bottom: 1.8rem; }
-  .redact-mark { width: 28px; height: 18px; background: var(--ink); flex-shrink: 0; }
-  .loading-msg { padding: 4rem; text-align: center; font-family: 'IBM Plex Mono'; }
+  :root {
+    --panel-border: #2A2F27;
+    --amber: #E8A33D;
+    --red: #D64545;
+    --green: #5FA777;
+    --teal: #4FB6A8;
+  }
+
+  .live-dot {
+    width: 8px; height: 8px; border-radius: 9999px;
+    background: var(--red); display: inline-block;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse {
+    0%   { box-shadow: 0 0 0 0 rgba(214,69,69,.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(214,69,69,0); }
+    100% { box-shadow: 0 0 0 0 rgba(214,69,69,0); }
+  }
+
+  .ticker-track { overflow: hidden; }
+  .ticker-content {
+    display: inline-block; padding-left: 100%;
+    animation: ticker 45s linear infinite;
+  }
+  .ticker-track:hover .ticker-content { animation-play-state: paused; }
+  @keyframes ticker {
+    0%   { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+  }
+
+  .sort-btn, .filter-btn {
+    background: transparent; color: #8B9186; transition: background-color .15s, color .15s;
+  }
+  .sort-btn.is-active, .filter-btn.is-active { background: #171B16; color: #E8E4D8; }
+  .sort-btn:not(:last-child), .filter-btn:not(:last-child) { border-right: 1px solid var(--panel-border); }
+
+  .card {
+    background: #171B16; border: 1px solid var(--panel-border);
+    transition: transform .15s ease, border-color .15s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: var(--teal); }
+
+  .signal-bars { display: flex; align-items: flex-end; gap: 3px; height: 18px; }
+  .signal-bars i { width: 4px; display: block; background: var(--panel-border); border-radius: 1px; }
+  .signal-bars i:nth-child(1) { height: 30%; }
+  .signal-bars i:nth-child(2) { height: 50%; }
+  .signal-bars i:nth-child(3) { height: 65%; }
+  .signal-bars i:nth-child(4) { height: 80%; }
+  .signal-bars i:nth-child(5) { height: 100%; }
+  .signal-bars i.filled { background: var(--fill, var(--amber)); }
+
+  :focus-visible { outline: 2px solid var(--teal); outline-offset: 2px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .ticker-content { animation: none; }
+    .live-dot { animation: none; }
+    .card { transition: none; }
+  }
 </style>
 </head>
-<body>
-<header><div class="headline-font" style="font-size: 1.4rem;">UNREPORTED INDIA</div><div class="meta-mono">Real-Time Discrepancy Tracking</div></header>
-<div class="disclaimer-strip">Warning: High discrepancy detected between field reports and government releases.</div>
-<main>
-  <section class="panel"><div class="panel-header">Field Reports</div><div class="scroll-area" id="feed-list"></div></section>
-  <section class="panel" style="background: var(--paper-alt);"><div class="panel-header">Context Gap Analysis</div><div class="scroll-area" id="context-panel"></div></section>
-</main>
+
+<body class="bg-ink text-paper font-body antialiased min-h-screen flex flex-col">
+
+  <header class="sticky top-0 z-30 bg-ink/95 backdrop-blur border-b border-panel-border/60">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <span class="live-dot" aria-hidden="true"></span>
+        <div>
+          <h1 class="font-display font-extrabold uppercase tracking-wide text-2xl sm:text-3xl leading-none">Unreported India</h1>
+          <p class="font-mono text-[11px] text-muted uppercase tracking-widest mt-1">Ground signal &middot; direct feed</p>
+        </div>
+      </div>
+      <div class="text-right font-mono text-[11px] text-muted hidden sm:block">
+        <div>Last sync</div>
+        <div id="last-sync" class="text-paper">&mdash;&mdash;:&mdash;&mdash;</div>
+      </div>
+    </div>
+    <div class="ticker-track border-t border-panel-border/60 bg-panel/70">
+      <div id="ticker-content" class="ticker-content font-mono text-xs sm:text-sm text-signal-amber py-2 whitespace-nowrap">
+        LISTENING FOR GROUND REPORTS...
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-4 py-5 flex flex-wrap items-center gap-3 w-full">
+    <span class="font-mono text-[11px] uppercase tracking-widest text-muted mr-1">Sort</span>
+    <div class="inline-flex rounded-full border border-panel-border overflow-hidden" role="group" aria-label="Sort alerts">
+      <button data-sort="urgency" class="sort-btn is-active px-3 py-1.5 text-xs font-mono uppercase">Most urgent</button>
+      <button data-sort="recent" class="sort-btn px-3 py-1.5 text-xs font-mono uppercase">Most recent</button>
+    </div>
+
+    <span class="font-mono text-[11px] uppercase tracking-widest text-muted ml-2 mr-1">Threshold</span>
+    <div class="inline-flex rounded-full border border-panel-border overflow-hidden" role="group" aria-label="Filter by urgency">
+      <button data-min="0" class="filter-btn is-active px-3 py-1.5 text-xs font-mono uppercase">All</button>
+      <button data-min="7" class="filter-btn px-3 py-1.5 text-xs font-mono uppercase">7+</button>
+      <button data-min="9" class="filter-btn px-3 py-1.5 text-xs font-mono uppercase">9+</button>
+    </div>
+
+    <button id="refresh-btn" class="ml-auto font-mono text-[11px] uppercase tracking-widest text-wire-teal border border-wire-teal/40 rounded-full px-3 py-1.5 hover:bg-wire-teal/10 transition">
+      Refresh
+    </button>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 pb-16 w-full flex-1">
+    <div id="empty-state" class="hidden text-center py-24 font-mono text-muted">
+      <div class="live-dot mx-auto mb-4"></div>
+      <p class="uppercase tracking-widest text-sm">Awaiting first transmission</p>
+      <p class="text-xs mt-2 max-w-sm mx-auto">No alerts scored yet. The scraper runs every 3 hours &mdash; check back shortly, or trigger it manually from the repo's Actions tab.</p>
+    </div>
+    <div id="card-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5"></div>
+  </main>
+
+  <footer class="border-t border-panel-border/60 py-6">
+    <div class="max-w-6xl mx-auto px-4 font-mono text-[11px] text-muted flex flex-col sm:flex-row gap-2 sm:justify-between">
+      <span>Auto-refreshed every 3 hours by GitHub Actions &middot; scored by Gemini 2.5 Flash</span>
+      <span>Aggregated from independent creators &middot; unverified, AI-scored, not a substitute for on-ground confirmation</span>
+    </div>
+  </footer>
+
 <script>
-  let reports = []; let activeId = null;
-  async function load() {
-    try {
-      const res = await fetch('./news_feed.json?t=' + Date.now());
-      reports = await res.json();
-      if (reports.length > 0) { activeId = String(reports[0].id); render(); }
-      else { document.getElementById('feed-list').innerHTML = '<div class="loading-msg">Feed is empty.</div>'; }
-    } catch (e) { document.getElementById('feed-list').innerHTML = '<div class="loading-msg">Error loading feed.</div>'; }
+  const state = { items: [], sort: 'urgency', minUrgency: 0 };
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, c => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
   }
+
+  function urgencyColor(score) {
+    if (score >= 8) return 'var(--red)';
+    if (score >= 5) return 'var(--amber)';
+    return 'var(--green)';
+  }
+
+  function timeAgo(iso) {
+    const then = new Date(iso).getTime();
+    if (Number.isNaN(then)) return '';
+    const diffMin = Math.max(1, Math.round((Date.now() - then) / 60000));
+    if (diffMin < 60) return `${diffMin}m ago`;
+    const diffHr = Math.round(diffMin / 60);
+    if (diffHr < 24) return `${diffHr}h ago`;
+    return `${Math.round(diffHr / 24)}d ago`;
+  }
+
+  async function loadFeed() {
+    try {
+      const res = await fetch('./news_feed.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('feed not found');
+      const data = await res.json();
+      state.items = Array.isArray(data) ? data : [];
+    } catch (err) {
+      state.items = [];
+    }
+    document.getElementById('last-sync').textContent =
+      new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    render();
+  }
+
+  function sortedFilteredItems() {
+    const items = state.items.filter(i => (i.urgency_score || 0) >= state.minUrgency);
+    items.sort((a, b) => state.sort === 'urgency'
+      ? (b.urgency_score - a.urgency_score) || (new Date(b.published) - new Date(a.published))
+      : new Date(b.published) - new Date(a.published));
+    return items;
+  }
+
+  function renderTicker() {
+    const el = document.getElementById('ticker-content');
+    const top = [...state.items].sort((a, b) => (b.urgency_score || 0) - (a.urgency_score || 0)).slice(0, 8);
+    if (!top.length) {
+      el.textContent = 'LISTENING FOR GROUND REPORTS...';
+      return;
+    }
+    el.textContent = top.map(i => `URGENCY ${i.urgency_score}/10 — ${i.title}`).join('     //     ');
+  }
+
+  function signalBarsHtml(score, color) {
+    const filled = Math.max(1, Math.ceil((score || 0) / 2));
+    let bars = '';
+    for (let n = 1; n <= 5; n++) {
+      bars += `<i class="${n <= filled ? 'filled' : ''}" style="--fill:${color}"></i>`;
+    }
+    return bars;
+  }
+
+  function cardHtml(item) {
+    const color = urgencyColor(item.urgency_score || 0);
+    const thumb = item.thumbnail_url
+      ? `<img src="${escapeHtml(item.thumbnail_url)}" alt="" class="w-full h-40 object-cover" loading="lazy">`
+      : `<div class="w-full h-40 bg-black/40"></div>`;
+
+    return `
+      <article class="card rounded-lg overflow-hidden flex flex-col">
+        <div class="relative">
+          ${thumb}
+          <span class="absolute top-2 left-2 font-mono text-xs font-bold px-2 py-1 rounded bg-ink/80" style="color:${color}">
+            ${item.urgency_score ?? '?'}/10
+          </span>
+        </div>
+        <div class="p-4 flex flex-col gap-3 flex-1">
+          <span class="font-mono text-[10px] uppercase tracking-widest text-muted">${escapeHtml(item.category || 'Other')}</span>
+          <h2 class="font-display font-bold text-lg leading-snug">${escapeHtml(item.title)}</h2>
+          <p class="text-sm text-paper/90">${escapeHtml(item.summary || '')}</p>
+          ${item.locals_say ? `
+          <blockquote class="text-xs italic text-muted border-l-2 border-wire-teal/50 pl-3">
+            "${escapeHtml(item.locals_say)}"
+          </blockquote>` : ''}
+          <div class="signal-bars mt-auto">${signalBarsHtml(item.urgency_score, color)}</div>
+          <div class="flex items-center justify-between pt-2 border-t border-panel-border/60 mt-1">
+            <div class="font-mono text-[11px] text-muted">
+              <div>${escapeHtml(item.channel_name)}</div>
+              <div>${timeAgo(item.published)}</div>
+            </div>
+            <a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener noreferrer"
+               class="font-mono text-[11px] uppercase tracking-widest text-wire-teal border border-wire-teal/40 rounded-full px-3 py-1.5 hover:bg-wire-teal/10 transition">
+               Watch source
+            </a>
+          </div>
+        </div>
+      </article>`;
+  }
+
   function render() {
-    document.getElementById('feed-list').innerHTML = reports.map(r => `
-      <button class="feed-item ${String(r.id) === activeId ? 'active' : ''}" onclick="activeId='${r.id}';render()">
-        <div style="display:flex; justify-content:space-between; align-items:center;"><span class="meta-mono">${r.date}</span>
-        <div class="severity-meter">${Array(5).fill(0).map((_, i) => `<div class="dot" style="opacity:${i < r.severity ? 1 : 0.15}"></div>`).join('')}</div></div>
-        <h3 class="headline-font">${r.headline}</h3><div class="meta-mono" style="color:var(--teal)">Source: ${r.reporter}</div>
-      </button>`).join('');
-    const s = reports.find(r => String(r.id) === activeId);
-    if (s) {
-      document.getElementById('context-panel').innerHTML = `
-        <div class="context-wrapper">
-          <div class="official-card"><div class="stamp">OFFICIAL RECORD</div><div class="meta-mono" style="margin-bottom:1rem;">Source: ${s.officialSource}</div>
-          <p style="font-style:italic; font-size:1.15rem; line-height:1.6;">"${s.official}"</p></div>
-          <div class="meta-mono" style="color:var(--rust); margin-bottom:1.5rem; font-weight:600;">Information Gaps Found</div>
-          ${s.missing.map(m => `<div class="gap-item"><div class="redact-mark"></div><div style="font-size:1.1rem; line-height:1.4;">${m}</div></div>`).join('')}
-          <div style="margin-top:4rem; padding-top:2rem; border-top:1px solid var(--line); color:var(--ink-soft); font-style:italic;">Summary: ${s.body}</div>
-        </div>`;
+    renderTicker();
+    const items = sortedFilteredItems();
+    const grid = document.getElementById('card-grid');
+    const empty = document.getElementById('empty-state');
+    if (!items.length) {
+      grid.innerHTML = '';
+      empty.classList.remove('hidden');
+    } else {
+      empty.classList.add('hidden');
+      grid.innerHTML = items.map(cardHtml).join('');
     }
   }
-  window.onload = load;
+
+  document.querySelectorAll('.sort-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      state.sort = btn.dataset.sort;
+      render();
+    });
+  });
+
+  document.querySelectorAll('.filter-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('is-active'));
+      btn.classList.add('is-active');
+      state.minUrgency = Number(btn.dataset.min);
+      render();
+    });
+  });
+
+  document.getElementById('refresh-btn').addEventListener('click', loadFeed);
+
+  loadFeed();
+  setInterval(loadFeed, 5 * 60 * 1000);
 </script>
 </body>
 </html>
