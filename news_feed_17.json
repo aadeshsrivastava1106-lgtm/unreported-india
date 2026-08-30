@@ -2,7 +2,7 @@
   "title": "Malaria outbreak in Balaghat, death toll rise to 28+",
   "source": "Muskan Informs",
   "urgency_score": 9,
-  "ground_truth": "A malaria outbreak in Balaghat has led to over 28 deaths.",
-  "official_record": "The provided video, embedded from YouTube, reports on a malaria outbreak in Balaghat, with the death toll exceeding 28. The description includes a YouTube embed link for the video content.",
-  "context_gap": "The report lacks crucial details such as the specific time frame of the outbreak, the affected villages or areas within Balaghat, the demographics of the deceased (e.g., age groups), the government's response or intervention efforts, the availability of medical facilities and resources, and the underlying causes contributing to the outbreak's severity (e.g., lack of sanitation, mosquito control measures)."
+  "ground_truth": "A malaria outbreak in Balaghat has resulted in a death toll exceeding 28 individuals.",
+  "official_record": "The provided information indicates a severe malaria outbreak in Balaghat, with the death toll rising to over 28. The video is embedded from YouTube.",
+  "context_gap": "The report lacks crucial details such as the specific time frame of the outbreak, the affected villages or areas within Balaghat, demographic information of the deceased, measures being taken by local authorities or health organizations, and the current status of the outbreak (e.g., if it's contained or still spreading). There is no mention of the causes contributing to the outbreak's severity or any public health advisories issued."
 }
