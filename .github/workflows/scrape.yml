@@ -1,44 +1,42 @@
-name: Scrape & Analyze News Feed
+name: Scrape ground reports
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # every 3 hours
-  workflow_dispatch: {}      # manual trigger
+    - cron: '0 */3 * * *'   # every 3 hours
+  workflow_dispatch: {}      # lets you trigger a run manually from the Actions tab
 
 permissions:
-  contents: write            # Required for pushing changes to repo
+  contents: write
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
     steps:
-      - name: Check out repository
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install dependencies
-        run: pip install google-genai
+        run: pip install --quiet requests feedparser google-genai
 
       - name: Run scraper
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scraper.py
 
-      - name: Commit and Push
+      - name: Commit and push if the feed changed
         run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git config user.name "unreported-india-bot"
+          git config user.email "actions@users.noreply.github.com"
           git add news_feed.json
           if git diff --cached --quiet; then
-            echo "No changes to commit."
+            echo "No new alerts, nothing to commit."
           else
-            git commit -m "chore: refresh news_feed.json [skip ci]"
-            git pull --rebase origin main
-            git push origin main
+            git commit -m "Update ground report feed [automated]"
+            git pull --rebase
+            git push
           fi
