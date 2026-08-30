@@ -3,16 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unreported India</title>
+<title>Unreported India | Accountabilty Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap">
 <style>
-  /* ------------------------------------------------------------------
-   * UNREPORTED INDIA — static, buildless front end.
-   * Ported from the UnreportedIndia.jsx prototype. No framework, no
-   * bundler: this file is meant to be served as-is (e.g. GitHub Pages)
-   * next to a news_feed.json produced by scraper.py.
-   * ------------------------------------------------------------------ */
   :root {
     --paper: #E7E3D6;
     --paper-alt: #DDD8C7;
@@ -24,397 +18,232 @@
     --rust: #8B3A2B;
     --ochre: #A97323;
   }
+
   * { box-sizing: border-box; }
-  html, body { height: 100%; }
-  body {
-    margin: 0;
-    background: var(--paper);
-    color: var(--ink);
-    font-family: 'IBM Plex Sans', sans-serif;
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-  .headline-font {
-    font-family: 'Barlow Condensed', sans-serif;
-    font-weight: 700;
-    letter-spacing: -0.01em;
-  }
-  .body-copy { color: var(--ink-soft); line-height: 1.5; margin: 0 0 0.5rem 0; }
-  .meta-mono {
-    font-family: 'IBM Plex Mono', monospace;
-    color: var(--ink-soft);
-    letter-spacing: 0.02em;
-    font-size: 0.75rem;
+  
+  body { 
+    margin: 0; 
+    background: var(--paper); 
+    color: var(--ink); 
+    font-family: 'IBM Plex Sans', sans-serif; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; 
+    overflow: hidden; 
   }
 
-  /* Masthead */
-  .masthead {
+  .headline-font { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+  .meta-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  header {
     background: var(--ink);
     color: var(--paper);
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
     padding: 1rem 1.5rem;
-  }
-  .masthead-left { display: flex; align-items: center; gap: 0.75rem; }
-  .masthead-title {
-    font-family: 'Special Elite', monospace;
-    letter-spacing: 0.03em;
-    font-size: 1.15rem;
-    margin: 0;
-  }
-  .masthead-sub { color: #C9C3AE; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; margin-top: 2px; }
-  .masthead-case { color: #C9C3AE; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; display: none; align-items: center; gap: 0.4rem; }
-  @media (min-width: 768px) { .masthead-case { display: flex; } }
-
-  /* Disclaimer strip */
-  .disclaimer {
-    background: var(--ochre);
-    color: #241C0A;
-    font-family: 'IBM Plex Mono', monospace;
-    letter-spacing: 0.02em;
-    font-size: 0.72rem;
-    padding: 0.5rem 1.5rem;
-  }
-
-  /* Split screen */
-  main.split {
-    flex: 1 1 auto;
-    min-height: 0;
-    display: grid;
-    grid-template-columns: 1fr;
-  }
-  @media (min-width: 768px) {
-    main.split { grid-template-columns: 1fr 1fr; }
-  }
-  .panel { display: flex; flex-direction: column; min-height: 0; background: var(--paper); }
-  .panel-right { background: var(--paper-alt); border-left: 1px solid var(--line); }
-  .panel-header {
-    font-family: 'Special Elite', monospace;
-    font-size: 0.72rem;
-    text-transform: uppercase;
-    letter-spacing: 0.12em;
-    color: var(--ink);
-    border-bottom: 1px solid var(--line);
-    padding: 0.85rem 1.25rem;
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    gap: 0.5rem;
-    flex-shrink: 0;
+    border-bottom: 3px solid var(--ochre);
   }
-  .panel-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
 
-  /* Feed list */
-  #feedList { list-style: none; margin: 0; padding: 0; }
+  .masthead-title { font-family: 'Special Elite', monospace; font-size: 1.4rem; margin: 0; }
+
+  .disclaimer-strip {
+    background: var(--rust);
+    color: #fff;
+    padding: 0.4rem 1.5rem;
+    font-size: 0.7rem;
+    font-family: 'IBM Plex Mono';
+    text-transform: uppercase;
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    overflow: hidden;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-left { border-right: 1px solid var(--line); }
+
+  .panel-header {
+    padding: 0.8rem 1.25rem;
+    background: var(--paper-alt);
+    border-bottom: 1px solid var(--line);
+    font-family: 'Special Elite';
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+  }
+
   .feed-item {
-    display: block;
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    background: none;
+    border-left: 5px solid transparent;
     width: 100%;
     text-align: left;
-    background: transparent;
-    border: none;
-    border-bottom: 1px solid var(--line);
-    border-left: 3px solid transparent;
-    padding: 1.1rem 1.25rem;
-    cursor: pointer;
-    font: inherit;
-    color: inherit;
-    transition: background 0.15s ease, border-color 0.15s ease;
-  }
-  .feed-item:hover { background: rgba(46, 110, 99, 0.06); }
-  .feed-item:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
-  .feed-item.active { background: rgba(46, 110, 99, 0.10); border-left-color: var(--teal); }
-  .feed-item-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
-  .feed-item-meta { display: flex; align-items: center; gap: 0.75rem; }
-  .feed-item-meta .meta-mono { color: var(--teal-dark); }
-  .feed-item h3 { margin: 0 0 0.25rem 0; font-size: 1.35rem; line-height: 1.2; }
-  .byline { color: var(--teal-dark); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
-
-  .severity-meter { display: flex; align-items: center; gap: 3px; }
-  .severity-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--rust); display: inline-block; }
-
-  /* Context panel */
-  .content-fade { animation: fadeSlide 0.25s ease; padding-bottom: 1.5rem; }
-  @keyframes fadeSlide {
-    from { opacity: 0; transform: translateY(4px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .content-fade { animation: none; }
-    .feed-item { transition: none; }
   }
 
-  .official-box {
-    position: relative;
-    background: #F1EEE2;
+  .feed-item:hover { background: rgba(0,0,0,0.04); }
+  .feed-item.active { background: #fff; border-left-color: var(--teal); }
+
+  .feed-item h3 { margin: 0.5rem 0; font-size: 1.4rem; line-height: 1.1; }
+
+  .severity-meter { margin-top: 0.5rem; }
+  .dot { width: 7px; height: 7px; border-radius: 50%; display: inline-block; background: var(--rust); margin-right: 3px; }
+
+  .context-wrapper { padding: 2rem; max-width: 800px; margin: 0 auto; }
+
+  .official-card {
+    background: #fff;
     border: 1px solid var(--line);
-    border-top: 3px solid var(--ochre);
-    margin: 1.25rem 1.25rem 0 1.25rem;
-    border-radius: 2px;
-    padding: 1.25rem;
+    border-top: 5px solid var(--ochre);
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    box-shadow: 2px 2px 0 var(--line);
   }
-  .official-label { color: var(--ink-soft); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; text-transform: uppercase; }
-  .official-quote { font-style: italic; font-size: 0.98rem; line-height: 1.55; color: var(--ink); margin: 0; }
-  .official-source { color: var(--ink-soft); margin-top: 0.75rem; }
-  .stamp {
+
+  .official-card .stamp {
     position: absolute;
-    top: 0.9rem;
-    right: 1rem;
-    font-family: 'Special Elite', monospace;
-    font-size: 0.6rem;
-    letter-spacing: 0.08em;
+    top: 15px;
+    right: 15px;
+    border: 2px solid var(--rust);
     color: var(--rust);
-    border: 1.5px solid var(--rust);
-    padding: 0.2rem 0.5rem;
-    border-radius: 2px;
-    transform: rotate(-6deg);
-    opacity: 0.75;
+    font-family: 'Special Elite';
+    padding: 4px 8px;
+    font-size: 0.7rem;
+    transform: rotate(-4deg);
+    opacity: 0.8;
   }
 
-  .missing-section { padding: 1.25rem; }
-  .missing-label { color: var(--rust); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 1rem; text-transform: uppercase; }
-  #missingList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
-  #missingList li { display: flex; align-items: flex-start; gap: 0.75rem; }
-  .redaction-mark { flex-shrink: 0; margin-top: 0.4rem; width: 16px; height: 0.85em; background: var(--rust); border-radius: 2px; }
+  .missing-box { padding-left: 1rem; border-left: 2px dashed var(--rust); }
+  .missing-point { display: flex; gap: 1rem; margin-bottom: 1.5rem; align-items: flex-start; }
+  .redact-mark { width: 24px; height: 16px; background: var(--ink); flex-shrink: 0; margin-top: 4px; }
 
-  .state-message {
-    padding: 2rem 1.5rem;
-    color: var(--ink-soft);
-    font-size: 0.9rem;
-    line-height: 1.6;
-  }
-  .state-message.error { color: var(--rust); }
-  .state-message code {
-    font-family: 'IBM Plex Mono', monospace;
-    background: rgba(0,0,0,0.06);
-    padding: 0.1rem 0.35rem;
-    border-radius: 2px;
-  }
-
-  footer {
-    border-top: 1px solid var(--line);
-    color: var(--ink-soft);
-    font-family: 'IBM Plex Mono', monospace;
-    font-size: 0.72rem;
-    padding: 0.65rem 1.5rem;
-    flex-shrink: 0;
-  }
-
-  svg.icon { flex-shrink: 0; }
+  .loading-msg { padding: 3rem; text-align: center; font-family: 'IBM Plex Mono'; color: var(--ink-soft); }
 </style>
 </head>
 <body>
 
-<header class="masthead">
-  <div class="masthead-left">
-    <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 12a8 8 0 0 1 8-8v0a8 8 0 0 1 8 8v0a8 8 0 0 1-8 8v0a8 8 0 0 1-8-8v0Z"/><path d="M12 8v4l3 2"/></svg>
-    <div>
-      <p class="masthead-title">UNREPORTED INDIA</p>
-      <div class="masthead-sub" id="mastheadSub">Ground reporting, checked against the official record</div>
-    </div>
-  </div>
-  <div class="masthead-case">
-    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
-    <span id="caseLabel">Case file: loading…</span>
-  </div>
+<header>
+  <div class="masthead-title">UNREPORTED INDIA</div>
+  <div class="meta-mono" id="status-bar">Ground Data vs. Official Record</div>
 </header>
 
-<div class="disclaimer">
-  Independent reports are matched to official statements automatically by a language model — always verify before republishing.
+<div class="disclaimer-strip">
+  Automated Comparison: Independent video transcripts checked against public government releases.
 </div>
 
-<main class="split">
+<main>
   <section class="panel panel-left">
-    <div class="panel-header" id="feedHeader">
-      <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
-      <span>Independent feed — loading…</span>
-    </div>
-    <div class="panel-scroll">
-      <ul id="feedList"></ul>
+    <div class="panel-header">The Field Reports</div>
+    <div class="scroll-area" id="feed-list">
+      <div class="loading-msg">Searching for news_feed.json...</div>
     </div>
   </section>
 
-  <section class="panel panel-right">
-    <div class="panel-header">
-      <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
-      <span>Context gap for selected story</span>
+  <section class="panel panel-right" style="background: var(--paper-alt);">
+    <div class="panel-header">Discrepancy Analysis</div>
+    <div class="scroll-area" id="context-panel">
+      <div class="loading-msg">Select a report to view context gaps.</div>
     </div>
-    <div class="panel-scroll" id="contextPanel" aria-live="polite"></div>
   </section>
 </main>
 
-<footer>
-  Source: <code>news_feed.json</code>, generated by <code>scraper.py</code> · fetched at page load
-</footer>
-
-<noscript>This page needs JavaScript enabled to load the live feed.</noscript>
-
 <script>
-(function () {
-  "use strict";
+  let stories = [];
+  let currentId = null;
 
-  const FEED_URL = "./news_feed.json";
-
-  /** @type {Array<Object>} */
-  let feed = [];
-  let selectedId = null;
-
-  const feedListEl = document.getElementById("feedList");
-  const feedHeaderEl = document.getElementById("feedHeader").querySelector("span");
-  const contextPanelEl = document.getElementById("contextPanel");
-  const mastheadSubEl = document.getElementById("mastheadSub");
-  const caseLabelEl = document.getElementById("caseLabel");
-
-  // Tiny DOM-builder helper. Text content is always set via textContent
-  // (never innerHTML) so nothing in news_feed.json — which ultimately
-  // traces back to public video transcripts run through an LLM — can
-  // inject markup into the page.
-  function h(tag, props, children) {
-    const el = document.createElement(tag);
-    if (props) {
-      for (const [key, val] of Object.entries(props)) {
-        if (key === "className") el.className = val;
-        else if (key === "text") el.textContent = val;
-        else if (key === "style" && typeof val === "object") Object.assign(el.style, val);
-        else if (key.startsWith("on") && typeof val === "function") el.addEventListener(key.slice(2), val);
-        else if (key === "aria-hidden") el.setAttribute("aria-hidden", val);
-        else el.setAttribute(key, val);
-      }
-    }
-    (children || []).forEach((child) => {
-      if (child) el.appendChild(child);
-    });
-    return el;
-  }
-
-  function severityMeter(level) {
-    const wrap = h("div", { className: "severity-meter", "aria-label": `Gap severity ${level} of 5` });
-    for (let n = 1; n <= 5; n++) {
-      wrap.appendChild(h("span", { className: "severity-dot", style: { opacity: n <= level ? "1" : "0.22" } }));
-    }
-    return wrap;
-  }
-
-  function renderFeedList() {
-    feedListEl.innerHTML = "";
-    feed.forEach((item) => {
-      const active = item.id === selectedId;
-      const button = h(
-        "button",
-        {
-          className: "feed-item" + (active ? " active" : ""),
-          "aria-current": active ? "true" : "false",
-          onclick: () => selectStory(item.id),
-        },
-        [
-          h("div", { className: "feed-item-top" }, [
-            h("div", { className: "feed-item-meta" }, [
-              h("span", { className: "meta-mono", text: item.date || "" }),
-              h("span", { className: "meta-mono", text: item.location || "" }),
-            ]),
-            severityMeter(item.severity || 1),
-          ]),
-          h("h3", { className: "headline-font", text: item.headline || "(untitled)" }),
-          h("p", { className: "body-copy", text: item.body || "" }),
-          h("div", { className: "byline", text: item.reporter ? `Field report — ${item.reporter}` : "" }),
-        ]
-      );
-      feedListEl.appendChild(h("li", null, [button]));
-    });
-  }
-
-  function renderContext() {
-    const item = feed.find((f) => f.id === selectedId);
-    contextPanelEl.innerHTML = "";
-    if (!item) return;
-
-    const wrap = h("div", { className: "content-fade" });
-
-    const officialBox = h("div", { className: "official-box" }, [
-      h("span", { className: "stamp", text: "UNVERIFIED CLAIM" }),
-      h("div", { className: "official-label meta-mono" }, [
-        h("span", { text: "Official statement" }),
-      ]),
-      h("p", { className: "official-quote", text: item.official || "No matching official statement found on record." }),
-      h("div", { className: "meta-mono official-source", text: item.officialSource || "N/A" }),
-    ]);
-
-    const missingList = h("ul", { id: "missingList" });
-    (item.missing || []).forEach((point) => {
-      missingList.appendChild(
-        h("li", null, [
-          h("span", { className: "redaction-mark", "aria-hidden": "true" }),
-          h("span", { className: "body-copy", text: point }),
-        ])
-      );
-    });
-
-    const missingSection = h("div", { className: "missing-section" }, [
-      h("div", { className: "missing-label meta-mono" }, [h("span", { text: "What the statement leaves out" })]),
-      missingList,
-    ]);
-
-    wrap.appendChild(officialBox);
-    wrap.appendChild(missingSection);
-    contextPanelEl.appendChild(wrap);
-  }
-
-  function selectStory(id) {
-    selectedId = id;
-    renderFeedList();
-    renderContext();
-  }
-
-  function renderState(message, isError) {
-    feedListEl.innerHTML = "";
-    contextPanelEl.innerHTML = "";
-    const msg = h("div", { className: "state-message" + (isError ? " error" : "") });
-    msg.innerHTML = message; // fixed, developer-authored strings only — see calls below
-    feedListEl.parentElement.appendChild(msg);
-  }
-
-  async function loadFeed() {
-    feedHeaderEl.textContent = "Independent feed — loading…";
+  async function loadData() {
+    const listContainer = document.getElementById('feed-list');
     try {
-      const res = await fetch(FEED_URL, { cache: "no-store" });
-      if (!res.ok) {
-        throw new Error(`${res.status} ${res.statusText}`);
-      }
-      const data = await res.json();
-      if (!Array.isArray(data) || data.length === 0) {
-        renderState(
-          "No stories yet. <code>news_feed.json</code> loaded but is empty — the scraper workflow hasn't produced any entries.",
-          false
-        );
-        feedHeaderEl.textContent = "Independent feed — 0 stories";
-        mastheadSubEl.textContent = "Waiting on the first scrape";
-        caseLabelEl.textContent = "Case file: empty";
+      const response = await fetch('./news_feed.json', { cache: 'no-store' });
+      stories = await response.json();
+      
+      if (stories.length === 0) {
+        listContainer.innerHTML = '<div class="loading-msg">Feed is empty. Scraper run required.</div>';
         return;
       }
 
-      feed = data;
-      selectedId = feed[0].id;
-      renderFeedList();
-      renderContext();
-
-      feedHeaderEl.textContent = `Independent feed — ${feed.length} ${feed.length === 1 ? "story" : "stories"}`;
-      mastheadSubEl.textContent = "Ground reporting, checked against the official record";
-      caseLabelEl.textContent = feed[0].location ? `Case file: ${feed[0].location}` : "Case file: active";
+      currentId = String(stories[0].id);
+      renderUI();
     } catch (err) {
-      renderState(
-        `Couldn't load <code>news_feed.json</code> (${err.message}). Make sure it sits next to this page and that the scraper workflow has run at least once.`,
-        true
-      );
-      feedHeaderEl.textContent = "Independent feed — unavailable";
-      mastheadSubEl.textContent = "Feed unavailable";
-      caseLabelEl.textContent = "Case file: unavailable";
+      console.error(err);
+      listContainer.innerHTML = `<div class="loading-msg">Error: ${err.message}<br>news_feed.json not found.</div>`;
     }
   }
 
-  document.addEventListener("DOMContentLoaded", loadFeed);
-})();
-</script>
+  function renderUI() {
+    // Render Sidebar
+    const list = document.getElementById('feed-list');
+    list.innerHTML = stories.map(s => `
+      <button class="feed-item ${String(s.id) === currentId ? 'active' : ''}" onclick="changeStory('${s.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <span class="meta-mono">${s.date} | ${s.location}</span>
+          <div class="severity-meter">
+            ${Array(5).fill(0).map((_, i) => `<span class="dot" style="opacity: ${i < s.severity ? 1 : 0.15}"></span>`).join('')}
+          </div>
+        </div>
+        <h3 class="headline-font">${s.headline}</h3>
+        <div class="meta-mono" style="color: var(--teal-dark)">Source: ${s.reporter}</div>
+      </button>
+    `).join('');
 
+    // Render Context
+    const story = stories.find(s => String(s.id) === currentId);
+    const context = document.getElementById('context-panel');
+
+    if (story) {
+      context.innerHTML = `
+        <div class="context-wrapper">
+          <div class="official-card">
+            <div class="stamp">Official Release</div>
+            <div class="meta-mono" style="margin-bottom: 1rem; color: var(--ochre)">${story.officialSource}</div>
+            <p style="font-style: italic; line-height: 1.6; font-size: 1.1rem; color: var(--ink);">
+              "${story.official}"
+            </p>
+          </div>
+
+          <div class="meta-mono" style="color: var(--rust); margin-bottom: 1.5rem; font-weight: 600;">
+            The Discrepancy (Missing Context)
+          </div>
+
+          <div class="missing-box">
+            ${story.missing.map(m => `
+              <div class="missing-point">
+                <div class="redact-mark"></div>
+                <div style="font-size: 1rem; line-height: 1.5;">${m}</div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div style="margin-top: 3rem; font-size: 0.8rem; color: var(--ink-soft); font-family: 'IBM Plex Mono';">
+            Independent Narrative: ${story.body}
+          </div>
+        </div>
+      `;
+    }
+  }
+
+  function changeStory(id) {
+    currentId = String(id);
+    renderUI();
+  }
+
+  loadData();
+</script>
 </body>
 </html>
