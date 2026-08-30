@@ -6,22 +6,16 @@ on:
   workflow_dispatch: {}      # manual trigger
 
 permissions:
-  contents: write            # critical for pushing news_feed.json
-
-concurrency:
-  group: scrape-news-feed
-  cancel-in-progress: false
+  contents: write            # Required for pushing changes to repo
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
-
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0     # Required for rebase/push
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,14 +23,14 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install --no-cache-dir yt-dlp google-genai
+        run: pip install google-genai
 
-      - name: Run scraper + Gemini analysis
+      - name: Run scraper
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scraper.py
 
-      - name: Commit and Push news_feed.json
+      - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
