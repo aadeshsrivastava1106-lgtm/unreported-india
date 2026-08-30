@@ -3,123 +3,281 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Unreported India</title>
+<title>Unreported India | Accountability Dashboard</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap">
 <style>
   :root {
-    --paper: #E7E3D6; --paper-alt: #DDD8C7; --ink: #22241F;
-    --ink-soft: #5B5C50; --line: #C7C0A9; --teal: #2E6E63;
-    --teal-dark: #1E4B43; --rust: #8B3A2B; --ochre: #A97323;
+    --paper: #E7E3D6;
+    --paper-alt: #DDD8C7;
+    --ink: #22241F;
+    --ink-soft: #5B5C50;
+    --line: #C7C0A9;
+    --teal: #2E6E63;
+    --teal-dark: #1E4B43;
+    --rust: #8B3A2B;
+    --ochre: #A97323;
   }
-  * { box-sizing: border-box; }
-  body { margin: 0; background: var(--paper); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-  .headline-font { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; }
-  .meta-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; }
-  
-  header { background: var(--ink); color: var(--paper); padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
-  .masthead-title { font-family: 'Special Elite', monospace; font-size: 1.2rem; margin: 0; }
-  
-  .disclaimer { background: var(--ochre); color: #fff; padding: 0.4rem 1.5rem; font-size: 0.75rem; font-family: 'IBM Plex Mono'; }
-  
-  main { flex: 1; display: grid; grid-template-columns: 400px 1fr; overflow: hidden; }
-  .panel { display: flex; flex-direction: column; overflow: hidden; border-right: 1px solid var(--line); }
-  .panel-header { padding: 0.75rem 1.25rem; background: var(--paper-alt); border-bottom: 1px solid var(--line); font-family: 'Special Elite'; font-size: 0.8rem; }
-  .scroll-area { flex: 1; overflow-y: auto; }
-  
-  .feed-item { padding: 1.25rem; border-bottom: 1px solid var(--line); cursor: pointer; transition: 0.2s; background: none; border-left: 4px solid transparent; width: 100%; text-align: left; }
-  .feed-item:hover { background: rgba(0,0,0,0.03); }
-  .feed-item.active { background: #fff; border-left-color: var(--teal); }
-  .feed-item h3 { margin: 0.5rem 0; font-size: 1.2rem; line-height: 1.2; }
-  
-  .severity-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; background: var(--rust); margin-right: 2px; }
 
-  .official-box { background: #fff; border: 1px solid var(--line); border-top: 4px solid var(--ochre); margin: 1.5rem; padding: 1.5rem; position: relative; }
-  .stamp { position: absolute; top: 10px; right: 10px; border: 2px solid var(--rust); color: var(--rust); font-family: 'Special Elite'; padding: 2px 5px; font-size: 0.6rem; transform: rotate(-5deg); }
-  .missing-section { padding: 0 1.5rem 1.5rem; }
-  .missing-item { display: flex; gap: 1rem; margin-bottom: 1rem; }
-  .redaction { width: 20px; height: 14px; background: var(--ink); flex-shrink: 0; }
+  * { box-sizing: border-box; }
+  
+  body { 
+    margin: 0; 
+    background: var(--paper); 
+    color: var(--ink); 
+    font-family: 'IBM Plex Sans', sans-serif; 
+    display: flex; 
+    flex-direction: column; 
+    height: 100vh; 
+    overflow: hidden; 
+  }
+
+  .headline-font { font-family: 'Barlow Condensed', sans-serif; font-weight: 700; letter-spacing: -0.01em; }
+  .meta-mono { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; }
+
+  header {
+    background: var(--ink);
+    color: var(--paper);
+    padding: 1rem 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid var(--ochre);
+  }
+
+  .masthead-title { font-family: 'Special Elite', monospace; font-size: 1.4rem; margin: 0; }
+
+  .disclaimer-strip {
+    background: var(--rust);
+    color: #fff;
+    padding: 0.4rem 1.5rem;
+    font-size: 0.7rem;
+    font-family: 'IBM Plex Mono';
+    text-transform: uppercase;
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 420px 1fr;
+    overflow: hidden;
+  }
+
+  .panel {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .panel-left { border-right: 1px solid var(--line); }
+
+  .panel-header {
+    padding: 0.8rem 1.25rem;
+    background: var(--paper-alt);
+    border-bottom: 1px solid var(--line);
+    font-family: 'Special Elite';
+    font-size: 0.85rem;
+    color: var(--ink-soft);
+  }
+
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  /* Feed Items */
+  .feed-item {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+    transition: background 0.2s ease;
+    background: none;
+    border: none;
+    border-left: 6px solid transparent;
+    width: 100%;
+    text-align: left;
+    display: block;
+  }
+
+  .feed-item:hover { background: rgba(0,0,0,0.04); }
+  .feed-item.active { background: #fff; border-left-color: var(--teal); }
+
+  .feed-item h3 { 
+    margin: 0.5rem 0; 
+    font-size: 1.4rem; 
+    line-height: 1.1; 
+    color: var(--ink);
+  }
+
+  .severity-meter { display: flex; gap: 3px; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--rust); }
+
+  /* Context Detail View */
+  .context-wrapper { padding: 2.5rem; max-width: 900px; }
+
+  .official-card {
+    background: #fff;
+    border: 1px solid var(--line);
+    border-top: 6px solid var(--ochre);
+    padding: 2rem;
+    margin-bottom: 2.5rem;
+    position: relative;
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.05);
+  }
+
+  .official-card .stamp {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    border: 2px solid var(--rust);
+    color: var(--rust);
+    font-family: 'Special Elite';
+    padding: 4px 10px;
+    font-size: 0.75rem;
+    transform: rotate(-3deg);
+    font-weight: bold;
+  }
+
+  .missing-section-title {
+    color: var(--rust);
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 0.5rem;
+    font-weight: 600;
+  }
+
+  .gap-list { list-style: none; padding: 0; margin: 0; }
+  .gap-item { display: flex; gap: 1.5rem; margin-bottom: 1.8rem; align-items: flex-start; }
+  .redact-mark { width: 28px; height: 18px; background: var(--ink); flex-shrink: 0; margin-top: 4px; }
+  .gap-text { font-size: 1.1rem; line-height: 1.5; color: var(--ink); }
+
+  .narrative-box {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--line);
+    font-style: italic;
+    color: var(--ink-soft);
+    line-height: 1.6;
+  }
+
+  .loading-msg { padding: 4rem; text-align: center; font-family: 'IBM Plex Mono'; color: var(--ink-soft); }
 </style>
 </head>
 <body>
 
 <header>
-  <p class="masthead-title">UNREPORTED INDIA</p>
-  <div class="meta-mono">Case file: Balaghat Crisis</div>
+  <div class="masthead-title">UNREPORTED INDIA</div>
+  <div class="meta-mono" id="status-bar">Ground Truth vs. Press Release</div>
 </header>
 
-<div class="disclaimer">Independent reports matched against official government record</div>
+<div class="disclaimer-strip">
+  CRITICAL DISCREPANCY TRACKER: Comparing AI-Analyzed video transcripts against District Administration data.
+</div>
 
 <main>
-  <section class="panel">
-    <div class="panel-header">The Independent Feed</div>
-    <div class="scroll-area" id="feed-list"></div>
+  <!-- Sidebar Feed -->
+  <section class="panel panel-left">
+    <div class="panel-header">Documented Field Reports</div>
+    <div class="scroll-area" id="feed-list">
+      <div class="loading-msg">Loading news_feed.json...</div>
+    </div>
   </section>
 
-  <section class="panel" style="background: var(--paper-alt);">
-    <div class="panel-header">Context & Discrepancies</div>
-    <div class="scroll-area" id="context-panel"></div>
+  <!-- Content Detail -->
+  <section class="panel panel-right" style="background: var(--paper-alt);">
+    <div class="panel-header">Contextual Gap Analysis</div>
+    <div class="scroll-area" id="context-panel">
+      <div class="loading-msg">Select a report to analyze discrepancies.</div>
+    </div>
   </section>
 </main>
 
 <script>
-  let feed = [];
-  let selectedId = null;
+  let reports = [];
+  let activeId = null;
 
-  async function loadFeed() {
+  async function fetchData() {
+    const listEl = document.getElementById('feed-list');
     try {
-      const res = await fetch('./news_feed.json', { cache: 'no-store' });
-      feed = await res.json();
-      if (feed.length > 0) {
-        selectedId = String(feed[0].id);
-        render();
+      // Fetch with cache busting to see live changes
+      const response = await fetch('./news_feed.json?v=' + Date.now(), { cache: 'no-store' });
+      reports = await response.json();
+      
+      if (!reports || reports.length === 0) {
+        listEl.innerHTML = '<div class="loading-msg">Feed is currently empty. Run scraper.py to generate entries.</div>';
+        return;
       }
-    } catch (e) {
-      document.getElementById('feed-list').innerHTML = '<div style="padding:20px">No feed available.</div>';
+
+      activeId = String(reports[0].id);
+      renderAll();
+    } catch (err) {
+      console.error("Fetch Error:", err);
+      listEl.innerHTML = `<div class="loading-msg">Error loading data: ${err.message}<br>Ensure news_feed.json exists in the root folder.</div>`;
     }
   }
 
-  function render() {
-    const list = document.getElementById('feed-list');
-    list.innerHTML = feed.map(item => `
-      <button class="feed-item ${String(item.id) === selectedId ? 'active' : ''}" onclick="selectStory('${item.id}')">
-        <div style="display:flex; justify-content:space-between">
-          <span class="meta-mono">${item.date}</span>
-          <div>${Array(5).fill(0).map((_, i) => `<span class="severity-dot" style="opacity:${i < item.severity ? 1 : 0.2}"></span>`).join('')}</div>
+  function renderAll() {
+    // 1. Render the Sidebar
+    const listEl = document.getElementById('feed-list');
+    listEl.innerHTML = reports.map(item => `
+      <button class="feed-item ${String(item.id) === activeId ? 'active' : ''}" onclick="selectReport('${item.id}')">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <span class="meta-mono">${item.date} | ${item.location}</span>
+          <div class="severity-meter">
+            ${Array(5).fill(0).map((_, i) => `
+              <div class="dot" style="opacity: ${i < item.severity ? 1 : 0.15}"></div>
+            `).join('')}
+          </div>
         </div>
         <h3 class="headline-font">${item.headline}</h3>
-        <div class="meta-mono" style="color:var(--teal)">${item.reporter}</div>
+        <div class="meta-mono" style="color: var(--teal-dark)">Reported by: ${item.reporter}</div>
       </button>
     `).join('');
 
-    const activeItem = feed.find(i => String(i.id) === selectedId);
-    const context = document.getElementById('context-panel');
-    if (activeItem) {
-      context.innerHTML = `
-        <div class="official-box">
-          <div class="stamp">OFFICIAL RECORD</div>
-          <div class="meta-mono" style="margin-bottom:10px">${activeItem.officialSource}</div>
-          <p style="font-style:italic; margin:0">"${activeItem.official}"</p>
-        </div>
-        <div class="missing-section">
-          <div class="meta-mono" style="color:var(--rust); margin-bottom:1rem">Discrepancies Found</div>
-          ${activeItem.missing.map(m => `
-            <div class="missing-item">
-              <div class="redaction"></div>
-              <div style="line-height:1.4">${m}</div>
-            </div>
-          `).join('')}
+    // 2. Render the Detail View
+    const detailEl = document.getElementById('context-panel');
+    const selected = reports.find(r => String(r.id) === activeId);
+
+    if (selected) {
+      detailEl.innerHTML = `
+        <div class="context-wrapper">
+          <div class="official-card">
+            <div class="stamp">Official Account</div>
+            <div class="meta-mono" style="margin-bottom: 1rem; color: var(--ochre)">Source: ${selected.officialSource}</div>
+            <p style="font-style: italic; line-height: 1.6; font-size: 1.15rem; color: var(--ink); margin:0;">
+              "${selected.official}"
+            </p>
+          </div>
+
+          <div class="meta-mono missing-section-title">
+            Information Gaps Found in Official Record
+          </div>
+
+          <div class="gap-list">
+            ${selected.missing.map(gap => `
+              <div class="gap-item">
+                <div class="redact-mark"></div>
+                <div class="gap-text">${gap}</div>
+              </div>
+            `).join('')}
+          </div>
+          
+          <div class="narrative-box">
+            <div class="meta-mono" style="margin-bottom:0.5rem">Field Summary</div>
+            ${selected.body}
+          </div>
         </div>
       `;
     }
   }
 
-  function selectStory(id) {
-    selectedId = String(id);
-    render();
+  function selectReport(id) {
+    activeId = String(id);
+    renderAll();
   }
 
-  window.onload = loadFeed;
+  // Run on load
+  window.onload = fetchData;
 </script>
 </body>
 </html>
