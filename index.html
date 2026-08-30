@@ -1,438 +1,420 @@
-import React, { useState } from "react";
-import {
-  MapPin,
-  Clock,
-  FileWarning,
-  AlertTriangle,
-  ShieldAlert,
-  Radio,
-  Rss,
-} from "lucide-react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Unreported India</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap">
+<style>
+  /* ------------------------------------------------------------------
+   * UNREPORTED INDIA — static, buildless front end.
+   * Ported from the UnreportedIndia.jsx prototype. No framework, no
+   * bundler: this file is meant to be served as-is (e.g. GitHub Pages)
+   * next to a news_feed.json produced by scraper.py.
+   * ------------------------------------------------------------------ */
+  :root {
+    --paper: #E7E3D6;
+    --paper-alt: #DDD8C7;
+    --ink: #22241F;
+    --ink-soft: #5B5C50;
+    --line: #C7C0A9;
+    --teal: #2E6E63;
+    --teal-dark: #1E4B43;
+    --rust: #8B3A2B;
+    --ochre: #A97323;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'IBM Plex Sans', sans-serif;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+  .headline-font {
+    font-family: 'Barlow Condensed', sans-serif;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .body-copy { color: var(--ink-soft); line-height: 1.5; margin: 0 0 0.5rem 0; }
+  .meta-mono {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink-soft);
+    letter-spacing: 0.02em;
+    font-size: 0.75rem;
+  }
 
-/* ============================================================================
- * UNREPORTED INDIA — architecture notes
- * ----------------------------------------------------------------------------
- * Purpose
- *   A split-screen accountability dashboard. The left panel is a
- *   chronological feed of independent, ground-level reporting. Selecting a
- *   story loads the right panel: the matching official state statement,
- *   plus a structured list of what that statement omits or contradicts.
- *
- * Data model (see `mockFeed` below)
- *   Each feed entry pairs one independent story with one official
- *   statement and a `missing` array of discrepancy points. In production,
- *   `mockFeed` would be replaced by a fetch to a CMS / verification
- *   pipeline that keeps independent reports and official releases linked
- *   by story id — the component below does not care where the array comes
- *   from, only that each item has this shape.
- *
- * State
- *   Exactly one piece of state: `selectedId`. Everything else derives from
- *   it. This keeps the two panels trivially reproducible/shareable (e.g.
- *   `selectedId` maps cleanly to a URL param if this were routed).
- *
- * Extensibility
- *   - Swap `mockFeed` for a fetched array with the same shape.
- *   - `severity` (1-5) drives the "gap" meter and could later be computed
- *     server-side from the count/weight of verified discrepancies.
- *   - The layout is a single responsive grid: two columns on md+, stacked
- *     on mobile, so the right panel simply follows the left on small
- *     screens rather than requiring a separate mobile view.
- *
- * IMPORTANT — this file ships with fabricated placeholder data
- *   The Balaghat malaria-crisis entries below are illustrative mock data
- *   written to demonstrate the UI, not verified reporting. A persistent
- *   banner in the rendered app says so; do not remove it if you repurpose
- *   this file with real content until real, sourced content replaces the
- *   mock entries.
- * ==========================================================================*/
+  /* Masthead */
+  .masthead {
+    background: var(--ink);
+    color: var(--paper);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 1rem 1.5rem;
+  }
+  .masthead-left { display: flex; align-items: center; gap: 0.75rem; }
+  .masthead-title {
+    font-family: 'Special Elite', monospace;
+    letter-spacing: 0.03em;
+    font-size: 1.15rem;
+    margin: 0;
+  }
+  .masthead-sub { color: #C9C3AE; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; margin-top: 2px; }
+  .masthead-case { color: #C9C3AE; font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; display: none; align-items: center; gap: 0.4rem; }
+  @media (min-width: 768px) { .masthead-case { display: flex; } }
 
-const mockFeed = [
-  {
-    id: "e6",
-    date: "3 Oct",
-    reporter: "A. Mehra",
-    location: "Balaghat district",
-    severity: 5,
-    headline:
-      "After three weeks of ground reporting, state deploys mobile medical camps to worst-hit hamlets",
-    body:
-      "Camp locations announced this week match, hamlet for hamlet, the sites named in independent reports since mid-September.",
-    official:
-      "\u201cA routine seasonal health campaign has been rolled out across the district as per the annual calendar.\u201d",
-    officialSource: "State Health Dept. \u2014 Press Note, 3 Oct",
-    missing: [
-      "The camp locations match the exact hamlets named in independent reports over the prior three weeks \u2014 not a routine, pre-planned rotation.",
-      "No acknowledgment of the earlier drug stock-outs, spraying gaps, or language-access issues raised in ground reporting.",
-      "The \u201cannual calendar\u201d cited was not published or publicly available before this release.",
-    ],
-  },
-  {
-    id: "e5",
-    date: "27 Sep",
-    reporter: "S. Netam",
-    location: "Kirnapur block",
-    severity: 4,
-    headline: "Sub-centre logbook shows anti-malarial drugs out of stock for 12 days",
-    body:
-      "A logbook photographed at the Kirnapur sub-centre records a stock-out entry twelve days before the district's public statement.",
-    official: "\u201cAdequate stock of essential medicines is being maintained at all health facilities.\u201d",
-    officialSource: "District Health Dept. \u2014 Press Note, 27 Sep",
-    missing: [
-      "The stock report cited by officials was last updated three weeks before this statement was issued.",
-      "The nearest alternate stockist is over two hours away by shared jeep, with no free transport arranged.",
-      "No facility-level breakdown was published alongside the district-wide \u201cadequate stock\u201d claim.",
-    ],
-  },
-  {
-    id: "e4",
-    date: "24 Sep",
-    reporter: "R. Uikey",
-    location: "Baihar block",
-    severity: 3,
-    headline: "With the clinic shut past noon, parents say children are missing weeks of school",
-    body:
-      "The only sub-centre serving three hamlets closes at 1pm due to staff shortage, pushing families toward informal remedies.",
-    official: "\u201cSeasonal absenteeism is being monitored; attendance remains within normal range for the quarter.\u201d",
-    officialSource: "District Education Office \u2014 Quarterly Note, 24 Sep",
-    missing: [
-      "Attendance figures are aggregated at district level, which masks a sharper dip in the three affected hamlets.",
-      "No staffing data was released on why the sub-centre operates only half-days.",
-      "The statement does not break out how many absences are linked to fever-related illness specifically.",
-    ],
-  },
-  {
-    id: "e3",
-    date: "21 Sep",
-    reporter: "A. Mehra",
-    location: "Paraswada block",
-    severity: 3,
-    headline: "Health workers can't explain symptoms to patients who don't speak Hindi",
-    body:
-      "Baiga is the first language for most affected households; the fever treatment camp has no interpreter on staff.",
-    official: "No state or district release this month addresses language access at treatment camps.",
-    officialSource: "Review of public releases, 1\u201321 Sep",
-    missing: [
-      "No interpreter has been posted at the Paraswada block fever camp despite Baiga being the dominant first language.",
-      "Consent-for-treatment forms are printed only in Hindi and English.",
-      "No release acknowledges language access as a factor in delayed or refused treatment.",
-    ],
-  },
-  {
-    id: "e2",
-    date: "18 Sep",
-    reporter: "S. Netam",
-    location: "Lanji block",
-    severity: 4,
-    headline: "Villagers say anti-malarial spraying never reached three flood-cut hamlets",
-    body:
-      "Residents describe a fogging team that turned back at a washed-out footbridge and never returned.",
-    official: "\u201cThe vector control drive has been completed across all blocks of the district as per schedule.\u201d",
-    officialSource: "District Health Dept. \u2014 Press Note, 18 Sep",
-    missing: [
-      "The spraying log cites \u201c100% coverage\u201d but does not list the three affected hamlets by name.",
-      "Those hamlets are reachable only by a seasonal footbridge, washed out since the August rains.",
-      "No revised spraying date has been communicated to residents as of this report.",
-    ],
-  },
-  {
-    id: "e1",
-    date: "14 Sep",
-    reporter: "R. Uikey",
-    location: "Baihar block",
-    severity: 5,
-    headline: "Fever deaths in a Baiga hamlet go uncounted for a week before a health team arrives",
-    body:
-      "Ground reporting over nine days recorded a toll the district statement does not reflect.",
-    official: "\u201cAn isolated case of seasonal fever was reported and has been immediately contained. There is no cause for public concern.\u201d",
-    officialSource: "District Health Dept. \u2014 Press Note, 14 Sep",
-    missing: [
-      "Official count: 1 case. Village testimony gathered over nine days: 4 deaths, 11 hospitalisations.",
-      "The nearest primary health centre is 19 km away by forest track; it has had no rapid diagnostic kits since July.",
-      "No Baiga-speaking health worker was included in the response team sent to the hamlet.",
-    ],
-  },
-];
+  /* Disclaimer strip */
+  .disclaimer {
+    background: var(--ochre);
+    color: #241C0A;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.02em;
+    font-size: 0.72rem;
+    padding: 0.5rem 1.5rem;
+  }
 
-function SeverityMeter({ level }) {
-  return (
-    <div className="flex items-center gap-1" aria-label={`Gap severity ${level} of 5`}>
-      {[1, 2, 3, 4, 5].map((n) => (
-        <span
-          key={n}
-          className="severity-dot"
-          style={{ opacity: n <= level ? 1 : 0.22 }}
-        />
-      ))}
+  /* Split screen */
+  main.split {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+  @media (min-width: 768px) {
+    main.split { grid-template-columns: 1fr 1fr; }
+  }
+  .panel { display: flex; flex-direction: column; min-height: 0; background: var(--paper); }
+  .panel-right { background: var(--paper-alt); border-left: 1px solid var(--line); }
+  .panel-header {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--ink);
+    border-bottom: 1px solid var(--line);
+    padding: 0.85rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+  .panel-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+
+  /* Feed list */
+  #feedList { list-style: none; margin: 0; padding: 0; }
+  .feed-item {
+    display: block;
+    width: 100%;
+    text-align: left;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid var(--line);
+    border-left: 3px solid transparent;
+    padding: 1.1rem 1.25rem;
+    cursor: pointer;
+    font: inherit;
+    color: inherit;
+    transition: background 0.15s ease, border-color 0.15s ease;
+  }
+  .feed-item:hover { background: rgba(46, 110, 99, 0.06); }
+  .feed-item:focus-visible { outline: 2px solid var(--teal); outline-offset: -2px; }
+  .feed-item.active { background: rgba(46, 110, 99, 0.10); border-left-color: var(--teal); }
+  .feed-item-top { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; margin-bottom: 0.5rem; }
+  .feed-item-meta { display: flex; align-items: center; gap: 0.75rem; }
+  .feed-item-meta .meta-mono { color: var(--teal-dark); }
+  .feed-item h3 { margin: 0 0 0.25rem 0; font-size: 1.35rem; line-height: 1.2; }
+  .byline { color: var(--teal-dark); font-family: 'IBM Plex Mono', monospace; font-size: 0.72rem; }
+
+  .severity-meter { display: flex; align-items: center; gap: 3px; }
+  .severity-dot { width: 6px; height: 6px; border-radius: 999px; background: var(--rust); display: inline-block; }
+
+  /* Context panel */
+  .content-fade { animation: fadeSlide 0.25s ease; padding-bottom: 1.5rem; }
+  @keyframes fadeSlide {
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .content-fade { animation: none; }
+    .feed-item { transition: none; }
+  }
+
+  .official-box {
+    position: relative;
+    background: #F1EEE2;
+    border: 1px solid var(--line);
+    border-top: 3px solid var(--ochre);
+    margin: 1.25rem 1.25rem 0 1.25rem;
+    border-radius: 2px;
+    padding: 1.25rem;
+  }
+  .official-label { color: var(--ink-soft); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 0.75rem; text-transform: uppercase; }
+  .official-quote { font-style: italic; font-size: 0.98rem; line-height: 1.55; color: var(--ink); margin: 0; }
+  .official-source { color: var(--ink-soft); margin-top: 0.75rem; }
+  .stamp {
+    position: absolute;
+    top: 0.9rem;
+    right: 1rem;
+    font-family: 'Special Elite', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--rust);
+    border: 1.5px solid var(--rust);
+    padding: 0.2rem 0.5rem;
+    border-radius: 2px;
+    transform: rotate(-6deg);
+    opacity: 0.75;
+  }
+
+  .missing-section { padding: 1.25rem; }
+  .missing-label { color: var(--rust); display: flex; align-items: center; gap: 0.4rem; margin-bottom: 1rem; text-transform: uppercase; }
+  #missingList { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 1rem; }
+  #missingList li { display: flex; align-items: flex-start; gap: 0.75rem; }
+  .redaction-mark { flex-shrink: 0; margin-top: 0.4rem; width: 16px; height: 0.85em; background: var(--rust); border-radius: 2px; }
+
+  .state-message {
+    padding: 2rem 1.5rem;
+    color: var(--ink-soft);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+  .state-message.error { color: var(--rust); }
+  .state-message code {
+    font-family: 'IBM Plex Mono', monospace;
+    background: rgba(0,0,0,0.06);
+    padding: 0.1rem 0.35rem;
+    border-radius: 2px;
+  }
+
+  footer {
+    border-top: 1px solid var(--line);
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.72rem;
+    padding: 0.65rem 1.5rem;
+    flex-shrink: 0;
+  }
+
+  svg.icon { flex-shrink: 0; }
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead-left">
+    <svg class="icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M4 12a8 8 0 0 1 8-8v0a8 8 0 0 1 8 8v0a8 8 0 0 1-8 8v0a8 8 0 0 1-8-8v0Z"/><path d="M12 8v4l3 2"/></svg>
+    <div>
+      <p class="masthead-title">UNREPORTED INDIA</p>
+      <div class="masthead-sub" id="mastheadSub">Ground reporting, checked against the official record</div>
     </div>
-  );
-}
+  </div>
+  <div class="masthead-case">
+    <svg class="icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Z"/></svg>
+    <span id="caseLabel">Case file: loading…</span>
+  </div>
+</header>
 
-function FeedItem({ item, active, onSelect }) {
-  return (
-    <button
-      onClick={() => onSelect(item.id)}
-      className={`feed-item w-full text-left px-4 py-4 md:px-5 md:py-5 ${active ? "feed-item-active" : ""}`}
-    >
-      <div className="flex items-center justify-between gap-3 mb-2">
-        <div className="flex items-center gap-3 meta-row">
-          <span className="meta-mono flex items-center gap-1">
-            <Clock size={12} strokeWidth={2} />
-            {item.date}
-          </span>
-          <span className="meta-mono flex items-center gap-1">
-            <MapPin size={12} strokeWidth={2} />
-            {item.location}
-          </span>
-        </div>
-        <SeverityMeter level={item.severity} />
-      </div>
-      <h3 className="headline-font text-xl md:text-2xl leading-tight mb-1">{item.headline}</h3>
-      <p className="body-copy text-sm mb-2">{item.body}</p>
-      <div className="meta-mono text-xs byline">Field report \u2014 {item.reporter}</div>
-    </button>
-  );
-}
+<div class="disclaimer">
+  Independent reports are matched to official statements automatically by a language model — always verify before republishing.
+</div>
 
-function OfficialBox({ item }) {
-  return (
-    <div className="official-box relative px-5 py-5 md:px-6 md:py-6">
-      <div className="stamp">UNVERIFIED CLAIM</div>
-      <div className="flex items-center gap-2 meta-mono text-xs uppercase tracking-wide mb-3 official-label">
-        <FileWarning size={14} strokeWidth={2} />
-        Official statement
-      </div>
-      <p className="official-quote">{item.official}</p>
-      <div className="meta-mono text-xs mt-3 official-source">{item.officialSource}</div>
+<main class="split">
+  <section class="panel panel-left">
+    <div class="panel-header" id="feedHeader">
+      <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 11a9 9 0 0 1 9 9"/><path d="M4 4a16 16 0 0 1 16 16"/><circle cx="5" cy="19" r="1"/></svg>
+      <span>Independent feed — loading…</span>
     </div>
-  );
-}
-
-function MissingList({ item }) {
-  return (
-    <div className="px-5 py-5 md:px-6 md:py-6">
-      <div className="flex items-center gap-2 meta-mono text-xs uppercase tracking-wide mb-4 missing-label">
-        <AlertTriangle size={14} strokeWidth={2} />
-        What the statement leaves out
-      </div>
-      <ul className="flex flex-col gap-4">
-        {item.missing.map((point, i) => (
-          <li key={i} className="flex items-start gap-3">
-            <span className="redaction-mark" aria-hidden="true" />
-            <span className="body-copy text-sm">{point}</span>
-          </li>
-        ))}
-      </ul>
+    <div class="panel-scroll">
+      <ul id="feedList"></ul>
     </div>
-  );
-}
+  </section>
 
-export default function UnreportedIndia() {
-  const [selectedId, setSelectedId] = useState(mockFeed[0].id);
-  const selected = mockFeed.find((f) => f.id === selectedId) || mockFeed[0];
-
-  return (
-    <div className="ui-app flex flex-col min-h-screen">
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Special+Elite&display=swap');
-
-        .ui-app {
-          --paper: #E7E3D6;
-          --paper-alt: #DDD8C7;
-          --ink: #22241F;
-          --ink-soft: #5B5C50;
-          --line: #C7C0A9;
-          --teal: #2E6E63;
-          --teal-dark: #1E4B43;
-          --rust: #8B3A2B;
-          --ochre: #A97323;
-          background: var(--paper);
-          color: var(--ink);
-          font-family: 'IBM Plex Sans', sans-serif;
-        }
-        .headline-font {
-          font-family: 'Barlow Condensed', sans-serif;
-          font-weight: 700;
-          letter-spacing: -0.01em;
-        }
-        .body-copy { color: var(--ink-soft); line-height: 1.5; }
-        .meta-mono {
-          font-family: 'IBM Plex Mono', monospace;
-          color: var(--ink-soft);
-          letter-spacing: 0.02em;
-        }
-        .meta-row .meta-mono { color: var(--teal-dark); }
-
-        .masthead {
-          background: var(--ink);
-          color: var(--paper);
-        }
-        .masthead-title {
-          font-family: 'Special Elite', monospace;
-          letter-spacing: 0.03em;
-        }
-        .masthead-sub { color: #C9C3AE; }
-
-        .disclaimer {
-          background: var(--ochre);
-          color: #241C0A;
-          font-family: 'IBM Plex Mono', monospace;
-          letter-spacing: 0.02em;
-        }
-
-        .panel { background: var(--paper); }
-        .panel-right { background: var(--paper-alt); border-left: 1px solid var(--line); }
-        .panel-header {
-          font-family: 'Special Elite', monospace;
-          font-size: 0.72rem;
-          text-transform: uppercase;
-          letter-spacing: 0.12em;
-          color: var(--ink);
-          border-bottom: 1px solid var(--line);
-          padding: 0.85rem 1.25rem;
-        }
-
-        .feed-item {
-          border-bottom: 1px solid var(--line);
-          border-left: 3px solid transparent;
-          background: transparent;
-          transition: background 0.15s ease, border-color 0.15s ease;
-          cursor: pointer;
-        }
-        .feed-item:hover { background: rgba(46, 110, 99, 0.06); }
-        .feed-item-active {
-          background: rgba(46, 110, 99, 0.10);
-          border-left: 3px solid var(--teal);
-        }
-        .byline { color: var(--teal-dark); }
-
-        .severity-dot {
-          width: 6px;
-          height: 6px;
-          border-radius: 999px;
-          background: var(--rust);
-          display: inline-block;
-        }
-
-        .official-box {
-          background: #F1EEE2;
-          border: 1px solid var(--line);
-          border-top: 3px solid var(--ochre);
-          margin: 1.25rem 1.25rem 0 1.25rem;
-          border-radius: 2px;
-        }
-        .official-label { color: var(--ink-soft); }
-        .official-quote {
-          font-family: 'IBM Plex Sans', sans-serif;
-          font-style: italic;
-          font-size: 0.98rem;
-          line-height: 1.55;
-          color: var(--ink);
-        }
-        .official-source { color: var(--ink-soft); }
-
-        .stamp {
-          position: absolute;
-          top: 0.9rem;
-          right: 1rem;
-          font-family: 'Special Elite', monospace;
-          font-size: 0.62rem;
-          letter-spacing: 0.08em;
-          color: var(--rust);
-          border: 1.5px solid var(--rust);
-          padding: 0.2rem 0.5rem;
-          border-radius: 2px;
-          transform: rotate(-6deg);
-          opacity: 0.75;
-        }
-
-        .missing-label { color: var(--rust); }
-
-        .redaction-mark {
-          flex-shrink: 0;
-          margin-top: 0.4rem;
-          width: 16px;
-          height: 0.85em;
-          background: var(--rust);
-          border-radius: 2px;
-        }
-
-        .content-fade {
-          animation: fadeSlide 0.25s ease;
-        }
-        @keyframes fadeSlide {
-          from { opacity: 0; transform: translateY(4px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-          .content-fade { animation: none; }
-          .feed-item { transition: none; }
-        }
-      `}</style>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Masthead                                                          */}
-      {/* ---------------------------------------------------------------- */}
-      <header className="masthead px-5 py-4 md:px-8 md:py-5 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <Radio size={22} strokeWidth={1.75} />
-          <div>
-            <div className="masthead-title text-lg md:text-xl">UNREPORTED INDIA</div>
-            <div className="masthead-sub text-xs meta-mono">Ground reporting, checked against the official record</div>
-          </div>
-        </div>
-        <div className="hidden md:flex items-center gap-2 masthead-sub text-xs meta-mono">
-          <ShieldAlert size={14} />
-          Case file: Balaghat, seasonal fever response
-        </div>
-      </header>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Mock-data disclaimer \u2014 keep visible                              */}
-      {/* ---------------------------------------------------------------- */}
-      <div className="disclaimer px-5 py-2 md:px-8 text-xs">
-        SIMULATED DATA \u2014 the Balaghat entries below are fabricated for this prototype and do not describe verified real events.
-      </div>
-
-      {/* ---------------------------------------------------------------- */}
-      {/* Split-screen body                                                 */}
-      {/* ---------------------------------------------------------------- */}
-      <main className="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-2">
-        <section className="panel flex flex-col min-h-0">
-          <div className="panel-header flex items-center gap-2">
-            <Rss size={13} />
-            Independent feed \u2014 most recent first
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            {mockFeed.map((item) => (
-              <FeedItem
-                key={item.id}
-                item={item}
-                active={item.id === selectedId}
-                onSelect={setSelectedId}
-              />
-            ))}
-          </div>
-        </section>
-
-        <section className="panel-right flex flex-col min-h-0">
-          <div className="panel-header flex items-center gap-2">
-            <AlertTriangle size={13} />
-            Context gap for selected story
-          </div>
-          <div className="flex-1 min-h-0 overflow-y-auto">
-            <div key={selected.id} className="content-fade pb-6">
-              <OfficialBox item={selected} />
-              <MissingList item={selected} />
-            </div>
-          </div>
-        </section>
-      </main>
-
-      <footer className="px-5 py-3 md:px-8 meta-mono text-xs" style={{ borderTop: "1px solid var(--line)", color: "var(--ink-soft)" }}>
-        Prototype build \u2014 replace mockFeed with a live source to go to production.
-      </footer>
+  <section class="panel panel-right">
+    <div class="panel-header">
+      <svg class="icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>
+      <span>Context gap for selected story</span>
     </div>
-  );
-}
+    <div class="panel-scroll" id="contextPanel" aria-live="polite"></div>
+  </section>
+</main>
+
+<footer>
+  Source: <code>news_feed.json</code>, generated by <code>scraper.py</code> · fetched at page load
+</footer>
+
+<noscript>This page needs JavaScript enabled to load the live feed.</noscript>
+
+<script>
+(function () {
+  "use strict";
+
+  const FEED_URL = "./news_feed.json";
+
+  /** @type {Array<Object>} */
+  let feed = [];
+  let selectedId = null;
+
+  const feedListEl = document.getElementById("feedList");
+  const feedHeaderEl = document.getElementById("feedHeader").querySelector("span");
+  const contextPanelEl = document.getElementById("contextPanel");
+  const mastheadSubEl = document.getElementById("mastheadSub");
+  const caseLabelEl = document.getElementById("caseLabel");
+
+  // Tiny DOM-builder helper. Text content is always set via textContent
+  // (never innerHTML) so nothing in news_feed.json — which ultimately
+  // traces back to public video transcripts run through an LLM — can
+  // inject markup into the page.
+  function h(tag, props, children) {
+    const el = document.createElement(tag);
+    if (props) {
+      for (const [key, val] of Object.entries(props)) {
+        if (key === "className") el.className = val;
+        else if (key === "text") el.textContent = val;
+        else if (key === "style" && typeof val === "object") Object.assign(el.style, val);
+        else if (key.startsWith("on") && typeof val === "function") el.addEventListener(key.slice(2), val);
+        else if (key === "aria-hidden") el.setAttribute("aria-hidden", val);
+        else el.setAttribute(key, val);
+      }
+    }
+    (children || []).forEach((child) => {
+      if (child) el.appendChild(child);
+    });
+    return el;
+  }
+
+  function severityMeter(level) {
+    const wrap = h("div", { className: "severity-meter", "aria-label": `Gap severity ${level} of 5` });
+    for (let n = 1; n <= 5; n++) {
+      wrap.appendChild(h("span", { className: "severity-dot", style: { opacity: n <= level ? "1" : "0.22" } }));
+    }
+    return wrap;
+  }
+
+  function renderFeedList() {
+    feedListEl.innerHTML = "";
+    feed.forEach((item) => {
+      const active = item.id === selectedId;
+      const button = h(
+        "button",
+        {
+          className: "feed-item" + (active ? " active" : ""),
+          "aria-current": active ? "true" : "false",
+          onclick: () => selectStory(item.id),
+        },
+        [
+          h("div", { className: "feed-item-top" }, [
+            h("div", { className: "feed-item-meta" }, [
+              h("span", { className: "meta-mono", text: item.date || "" }),
+              h("span", { className: "meta-mono", text: item.location || "" }),
+            ]),
+            severityMeter(item.severity || 1),
+          ]),
+          h("h3", { className: "headline-font", text: item.headline || "(untitled)" }),
+          h("p", { className: "body-copy", text: item.body || "" }),
+          h("div", { className: "byline", text: item.reporter ? `Field report — ${item.reporter}` : "" }),
+        ]
+      );
+      feedListEl.appendChild(h("li", null, [button]));
+    });
+  }
+
+  function renderContext() {
+    const item = feed.find((f) => f.id === selectedId);
+    contextPanelEl.innerHTML = "";
+    if (!item) return;
+
+    const wrap = h("div", { className: "content-fade" });
+
+    const officialBox = h("div", { className: "official-box" }, [
+      h("span", { className: "stamp", text: "UNVERIFIED CLAIM" }),
+      h("div", { className: "official-label meta-mono" }, [
+        h("span", { text: "Official statement" }),
+      ]),
+      h("p", { className: "official-quote", text: item.official || "No matching official statement found on record." }),
+      h("div", { className: "meta-mono official-source", text: item.officialSource || "N/A" }),
+    ]);
+
+    const missingList = h("ul", { id: "missingList" });
+    (item.missing || []).forEach((point) => {
+      missingList.appendChild(
+        h("li", null, [
+          h("span", { className: "redaction-mark", "aria-hidden": "true" }),
+          h("span", { className: "body-copy", text: point }),
+        ])
+      );
+    });
+
+    const missingSection = h("div", { className: "missing-section" }, [
+      h("div", { className: "missing-label meta-mono" }, [h("span", { text: "What the statement leaves out" })]),
+      missingList,
+    ]);
+
+    wrap.appendChild(officialBox);
+    wrap.appendChild(missingSection);
+    contextPanelEl.appendChild(wrap);
+  }
+
+  function selectStory(id) {
+    selectedId = id;
+    renderFeedList();
+    renderContext();
+  }
+
+  function renderState(message, isError) {
+    feedListEl.innerHTML = "";
+    contextPanelEl.innerHTML = "";
+    const msg = h("div", { className: "state-message" + (isError ? " error" : "") });
+    msg.innerHTML = message; // fixed, developer-authored strings only — see calls below
+    feedListEl.parentElement.appendChild(msg);
+  }
+
+  async function loadFeed() {
+    feedHeaderEl.textContent = "Independent feed — loading…";
+    try {
+      const res = await fetch(FEED_URL, { cache: "no-store" });
+      if (!res.ok) {
+        throw new Error(`${res.status} ${res.statusText}`);
+      }
+      const data = await res.json();
+      if (!Array.isArray(data) || data.length === 0) {
+        renderState(
+          "No stories yet. <code>news_feed.json</code> loaded but is empty — the scraper workflow hasn't produced any entries.",
+          false
+        );
+        feedHeaderEl.textContent = "Independent feed — 0 stories";
+        mastheadSubEl.textContent = "Waiting on the first scrape";
+        caseLabelEl.textContent = "Case file: empty";
+        return;
+      }
+
+      feed = data;
+      selectedId = feed[0].id;
+      renderFeedList();
+      renderContext();
+
+      feedHeaderEl.textContent = `Independent feed — ${feed.length} ${feed.length === 1 ? "story" : "stories"}`;
+      mastheadSubEl.textContent = "Ground reporting, checked against the official record";
+      caseLabelEl.textContent = feed[0].location ? `Case file: ${feed[0].location}` : "Case file: active";
+    } catch (err) {
+      renderState(
+        `Couldn't load <code>news_feed.json</code> (${err.message}). Make sure it sits next to this page and that the scraper workflow has run at least once.`,
+        true
+      );
+      feedHeaderEl.textContent = "Independent feed — unavailable";
+      mastheadSubEl.textContent = "Feed unavailable";
+      caseLabelEl.textContent = "Case file: unavailable";
+    }
+  }
+
+  document.addEventListener("DOMContentLoaded", loadFeed);
+})();
+</script>
+
+</body>
+</html>
