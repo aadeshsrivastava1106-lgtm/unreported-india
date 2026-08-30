@@ -3,6 +3,6 @@
   "source": "Beyond The Script",
   "urgency_score": 9,
   "ground_truth": "Adivasis are protesting in Balaghat, Madhya Pradesh, due to the deaths of 27 children, which has raised questions.",
-  "official_record": "The video reports on protests by Adivasi communities in Balaghat, Madhya Pradesh, following the deaths of 27 children. The description includes an embedded YouTube video.",
-  "context_gap": "The report does not specify the cause of death for the 27 children, the timeline of these deaths, the specific demands of the protesting Adivasis, or the response from local authorities or government officials regarding these deaths and protests. It also lacks details on the socio-economic conditions of the Adivasi community in Balaghat that might be contributing to such a tragedy."
+  "official_record": "The video reports on protests by Adivasis in Balaghat, Madhya Pradesh, prompted by the deaths of 27 children.",
+  "context_gap": "The description does not provide details on the cause of the 27 children's deaths, the specific demands of the Adivasi protestors, the timeline of these events, or any official response from authorities regarding the deaths or protests. It also lacks information on the specific location within Balaghat or the demographics of the affected Adivasi community."
 }
