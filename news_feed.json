@@ -1,8 +1,8 @@
 {
-  "title": "Balaghat Malaria Outbreak : Baiga community plea to CM Mohan Yadav. #cmmohanyadav #balaghat #adiwasi",
-  "source": "Muskan Informs (https://www.youtube.com/watch?v=9nl2UA6HHm4)",
-  "urgency_score": 9.5,
-  "ground_truth": "Local reports and community accounts detail 25 deaths within the vulnerable Baiga tribe, exacerbated by contaminated stream water sources and a complete lack of mandated nutrition rations.",
-  "official_record": "Official Balaghat government statements recognize only 8 deaths and contain no formal acknowledgment of missing nutrition rations or systemic stream water contamination issues in the affected regions.",
-  "context_gap": "A major discrepancy of 17 undocumented deaths exists between official tallies (8) and local reporting (25). Additionally, the official narrative completely overlooks the structural failures driving the outbreak, namely the delivery of missing nutrition rations and the ongoing consumption of contaminated stream water by the Baiga community."
+  "title": "Malaria outbreak in Balaghat, death toll rise to 28+ #balaghat #adiwasi #malaria #madhyapradesh",
+  "source": "Muskan Informs (https://www.youtube.com/watch?v=NF6rgn6Ln3g)",
+  "urgency_score": 8.5,
+  "ground_truth": "Local reports confirm 25 deaths, with the crisis severely exacerbated by missing nutrition rations and reliance on contaminated stream water.",
+  "official_record": "Official Balaghat government statements acknowledge 8 deaths.",
+  "context_gap": "The video exaggerates the death toll to '28+' (compared to the official 8 and local 25). It also completely omits critical structural failures reported on the ground, specifically the missing nutrition rations and the consumption of contaminated stream water, which are key drivers of the high mortality and vulnerability in the region."
 }
