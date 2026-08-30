@@ -113,6 +113,7 @@
       <div class="text-right font-mono text-[11px] text-muted hidden sm:block">
         <div>Last sync</div>
         <div id="last-sync" class="text-paper">&mdash;&mdash;:&mdash;&mdash;</div>
+        <div id="feed-status" class="mt-0.5"></div>
       </div>
     </div>
     <div class="ticker-track border-t border-panel-border/60 bg-panel/70">
@@ -158,6 +159,16 @@
   </footer>
 
 <script>
+  // ------------------------------------------------------------------------
+  // CONFIG - fill these in with your own repo so the dashboard can list
+  // every news_feed*.json file that exists, no matter how many there are
+  // or what they're each named. Requires a PUBLIC repo (unauthenticated
+  // GitHub API calls can't read a private one from the browser).
+  // ------------------------------------------------------------------------
+  const GITHUB_OWNER = 'YOUR_GITHUB_USERNAME';
+  const GITHUB_REPO = 'YOUR_REPO_NAME';
+  const GITHUB_BRANCH = 'main';
+
   const state = { items: [], sort: 'urgency', minUrgency: 0 };
 
   function escapeHtml(str) {
@@ -174,7 +185,7 @@
 
   function timeAgo(iso) {
     const then = new Date(iso).getTime();
-    if (Number.isNaN(then)) return '';
+    if (!iso || Number.isNaN(then)) return '';
     const diffMin = Math.max(1, Math.round((Date.now() - then) / 60000));
     if (diffMin < 60) return `${diffMin}m ago`;
     const diffHr = Math.round(diffMin / 60);
@@ -182,36 +193,129 @@
     return `${Math.round(diffHr / 24)}d ago`;
   }
 
-  async function loadFeed() {
-    try {
-      const res = await fetch('./news_feed.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('feed not found');
-      const data = await res.json();
-      state.items = Array.isArray(data) ? data : [];
-    } catch (err) {
-      state.items = [];
+  function humanizeKey(key) {
+    return key.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // Some upstream writers (Make, in particular) don't always return a flat
+  // string for a field - sometimes it's a nested object or array instead.
+  // Rather than crash or print "[object Object]", turn whatever shows up
+  // into readable text.
+  function flattenToText(value) {
+    if (value === null || value === undefined || value === '') return '';
+    if (typeof value === 'string') return value;
+    if (Array.isArray(value)) return value.map(flattenToText).filter(Boolean).join('; ');
+    if (typeof value === 'object') {
+      return Object.entries(value)
+        .map(([k, v]) => `${humanizeKey(k)}: ${flattenToText(v)}`)
+        .filter(Boolean)
+        .join('  |  ');
     }
+    return String(value);
+  }
+
+  function looksLikeUrl(str) {
+    return typeof str === 'string' && /^https?:\/\//i.test(str);
+  }
+
+  // Normalizes either shape this dashboard has seen in the wild:
+  //  - the Python scraper's array records (video_id, category, summary, locals_say, ...)
+  //  - Make's one-object-per-file exports (title, source, ground_truth, official_record, context_gap)
+  // "source" has meant a channel name in some Make files and a video URL in
+  // others, so both are checked for rather than assumed.
+  function normalizeItem(raw, fallbackId) {
+    raw = raw || {};
+    const sourceIsUrl = looksLikeUrl(raw.source);
+    return {
+      id: raw.video_id || fallbackId,
+      title: raw.title || 'Untitled report',
+      channelName: raw.channel_name || (!sourceIsUrl ? raw.source : '') || 'Unknown source',
+      videoUrl: raw.video_url || (sourceIsUrl ? raw.source : '') || '',
+      thumbnailUrl: raw.thumbnail_url || '',
+      published: raw.published || raw.scraped_at || null,
+      urgencyScore: Math.max(0, Math.min(10, Number(raw.urgency_score) || 0)),
+      category: raw.category || '',
+      summary: raw.summary || '',
+      localsSay: raw.locals_say || '',
+      groundTruth: flattenToText(raw.ground_truth),
+      officialRecord: flattenToText(raw.official_record),
+      contextGap: flattenToText(raw.context_gap),
+    };
+  }
+
+  // Lists every file in the repo root and keeps the ones that look like a
+  // feed file, so this works whether there's one news_feed.json or fifty
+  // numbered ones, with no filenames hardcoded anywhere.
+  async function discoverFeedFiles() {
+    const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/?ref=${GITHUB_BRANCH}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`GitHub API error ${res.status}`);
+    const entries = await res.json();
+    if (!Array.isArray(entries)) throw new Error('Unexpected GitHub API response');
+    return entries.filter(e => e.type === 'file' && /^news_feed.*\.json$/i.test(e.name));
+  }
+
+  async function loadFeed() {
+    const statusEl = document.getElementById('feed-status');
+    let files = [];
+
+    try {
+      files = await discoverFeedFiles();
+    } catch (err) {
+      console.warn('Could not list repo contents, falling back to ./news_feed.json', err);
+      files = [{ name: 'news_feed.json', download_url: './news_feed.json' }];
+    }
+
+    const fetched = await Promise.all(files.map(async (file) => {
+      try {
+        const res = await fetch(file.download_url, { cache: 'no-store' });
+        if (!res.ok) return null;
+        return { name: file.name, data: await res.json() };
+      } catch {
+        return null;
+      }
+    }));
+
+    const items = [];
+    fetched.filter(Boolean).forEach(({ name, data }) => {
+      const records = Array.isArray(data) ? data : [data];
+      records.forEach((r, idx) => items.push(normalizeItem(r, `${name}#${idx}`)));
+    });
+
+    // De-dupe by id (matters for scraper records re-listed across runs;
+    // Make's one-file-per-story records won't collide since each has a
+    // unique filename-derived id).
+    const seen = new Set();
+    state.items = items.filter(i => {
+      if (seen.has(i.id)) return false;
+      seen.add(i.id);
+      return true;
+    });
+
     document.getElementById('last-sync').textContent =
       new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    if (statusEl) {
+      statusEl.textContent = `${fetched.filter(Boolean).length} file(s) · ${state.items.length} alert(s)`;
+    }
     render();
   }
 
   function sortedFilteredItems() {
-    const items = state.items.filter(i => (i.urgency_score || 0) >= state.minUrgency);
+    const items = state.items.filter(i => i.urgencyScore >= state.minUrgency);
     items.sort((a, b) => state.sort === 'urgency'
-      ? (b.urgency_score - a.urgency_score) || (new Date(b.published) - new Date(a.published))
-      : new Date(b.published) - new Date(a.published));
+      ? (b.urgencyScore - a.urgencyScore) || (new Date(b.published || 0) - new Date(a.published || 0))
+      : new Date(b.published || 0) - new Date(a.published || 0));
     return items;
   }
 
   function renderTicker() {
     const el = document.getElementById('ticker-content');
-    const top = [...state.items].sort((a, b) => (b.urgency_score || 0) - (a.urgency_score || 0)).slice(0, 8);
+    const top = [...state.items].sort((a, b) => b.urgencyScore - a.urgencyScore).slice(0, 8);
     if (!top.length) {
       el.textContent = 'LISTENING FOR GROUND REPORTS...';
       return;
     }
-    el.textContent = top.map(i => `URGENCY ${i.urgency_score}/10 — ${i.title}`).join('     //     ');
+    el.textContent = top.map(i => `URGENCY ${i.urgencyScore}/10 — ${i.title}`).join('     //     ');
   }
 
   function signalBarsHtml(score, color) {
@@ -224,37 +328,44 @@
   }
 
   function cardHtml(item) {
-    const color = urgencyColor(item.urgency_score || 0);
-    const thumb = item.thumbnail_url
-      ? `<img src="${escapeHtml(item.thumbnail_url)}" alt="" class="w-full h-40 object-cover" loading="lazy">`
+    const color = urgencyColor(item.urgencyScore);
+    const thumb = item.thumbnailUrl
+      ? `<img src="${escapeHtml(item.thumbnailUrl)}" alt="" class="w-full h-40 object-cover" loading="lazy">`
       : `<div class="w-full h-40 bg-black/40"></div>`;
+
+    const hasBreakdown = item.groundTruth || item.officialRecord || item.contextGap;
+    const bodyHtml = hasBreakdown ? `
+      <div class="space-y-2 text-xs">
+        ${item.groundTruth ? `<div><span class="font-mono uppercase tracking-widest text-signal-green">On the ground</span><p class="text-paper/90 mt-0.5">${escapeHtml(item.groundTruth)}</p></div>` : ''}
+        ${item.officialRecord ? `<div><span class="font-mono uppercase tracking-widest text-muted">Official record</span><p class="text-paper/90 mt-0.5">${escapeHtml(item.officialRecord)}</p></div>` : ''}
+        ${item.contextGap ? `<div><span class="font-mono uppercase tracking-widest text-signal-red">The gap</span><p class="text-paper/90 mt-0.5">${escapeHtml(item.contextGap)}</p></div>` : ''}
+      </div>` : `
+      ${item.summary ? `<p class="text-sm text-paper/90">${escapeHtml(item.summary)}</p>` : ''}
+      ${item.localsSay ? `<blockquote class="text-xs italic text-muted border-l-2 border-wire-teal/50 pl-3">"${escapeHtml(item.localsSay)}"</blockquote>` : ''}`;
 
     return `
       <article class="card rounded-lg overflow-hidden flex flex-col">
         <div class="relative">
           ${thumb}
           <span class="absolute top-2 left-2 font-mono text-xs font-bold px-2 py-1 rounded bg-ink/80" style="color:${color}">
-            ${item.urgency_score ?? '?'}/10
+            ${item.urgencyScore || '?'}/10
           </span>
         </div>
         <div class="p-4 flex flex-col gap-3 flex-1">
-          <span class="font-mono text-[10px] uppercase tracking-widest text-muted">${escapeHtml(item.category || 'Other')}</span>
+          ${item.category ? `<span class="font-mono text-[10px] uppercase tracking-widest text-muted">${escapeHtml(item.category)}</span>` : ''}
           <h2 class="font-display font-bold text-lg leading-snug">${escapeHtml(item.title)}</h2>
-          <p class="text-sm text-paper/90">${escapeHtml(item.summary || '')}</p>
-          ${item.locals_say ? `
-          <blockquote class="text-xs italic text-muted border-l-2 border-wire-teal/50 pl-3">
-            "${escapeHtml(item.locals_say)}"
-          </blockquote>` : ''}
-          <div class="signal-bars mt-auto">${signalBarsHtml(item.urgency_score, color)}</div>
+          ${bodyHtml}
+          <div class="signal-bars mt-auto">${signalBarsHtml(item.urgencyScore, color)}</div>
           <div class="flex items-center justify-between pt-2 border-t border-panel-border/60 mt-1">
             <div class="font-mono text-[11px] text-muted">
-              <div>${escapeHtml(item.channel_name)}</div>
-              <div>${timeAgo(item.published)}</div>
+              <div>${escapeHtml(item.channelName)}</div>
+              ${item.published ? `<div>${timeAgo(item.published)}</div>` : ''}
             </div>
-            <a href="${escapeHtml(item.video_url)}" target="_blank" rel="noopener noreferrer"
+            ${item.videoUrl ? `
+            <a href="${escapeHtml(item.videoUrl)}" target="_blank" rel="noopener noreferrer"
                class="font-mono text-[11px] uppercase tracking-widest text-wire-teal border border-wire-teal/40 rounded-full px-3 py-1.5 hover:bg-wire-teal/10 transition">
                Watch source
-            </a>
+            </a>` : ''}
           </div>
         </div>
       </article>`;
