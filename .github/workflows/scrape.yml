@@ -1,0 +1,49 @@
+name: Scrape & Analyze News Feed
+
+on:
+  schedule:
+    - cron: "0 */3 * * *"   # every 3 hours, on the hour
+  workflow_dispatch: {}      # allow manual runs from the Actions tab
+
+permissions:
+  contents: write            # required to commit news_feed.json back
+
+concurrency:
+  group: scrape-news-feed
+  cancel-in-progress: false  # never kill a run partway through a commit
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No requirements.txt / caching layer on purpose — two small,
+      # dependency-light packages install in a few seconds either way.
+      - name: Install dependencies
+        run: pip install --no-cache-dir --quiet yt-dlp google-genai
+
+      - name: Run scraper + Gemini analysis
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python scraper.py
+
+      - name: Commit updated news_feed.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add news_feed.json
+          if git diff --cached --quiet; then
+            echo "No changes to commit."
+          else
+            git commit -m "chore: refresh news_feed.json [skip ci]"
+            git push
+          fi
