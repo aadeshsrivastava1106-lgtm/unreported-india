@@ -3,6 +3,6 @@
   "source": "Muskan Informs",
   "urgency_score": 9,
   "ground_truth": "A malaria outbreak in Balaghat has led to over 28 deaths.",
-  "official_record": "The provided data indicates a malaria outbreak in Balaghat, Madhya Pradesh, with a death toll exceeding 28. The information is sourced from a YouTube video by Muskan Informs.",
-  "context_gap": "The report lacks crucial details such as the specific timeline of the outbreak, the affected villages or communities within Balaghat, the age groups most impacted, any official response or intervention from health authorities, the availability of medical aid, and the underlying reasons for the outbreak (e.g., lack of sanitation, mosquito control measures)."
+  "official_record": "The provided information indicates a malaria outbreak in Balaghat, Madhya Pradesh, resulting in more than 28 fatalities. The video is embedded from YouTube.",
+  "context_gap": "The report lacks details on the specific timeline of the outbreak, the affected villages or areas within Balaghat, the demographics of the deceased, and any official response or measures being taken by health authorities to control the outbreak. It also doesn't mention the type of malaria or the availability of medical resources."
 }
