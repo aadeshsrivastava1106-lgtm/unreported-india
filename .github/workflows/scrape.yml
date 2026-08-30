@@ -2,15 +2,15 @@ name: Scrape & Analyze News Feed
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # every 3 hours, on the hour
-  workflow_dispatch: {}      # allow manual runs from the Actions tab
+    - cron: "0 */3 * * *"   # every 3 hours
+  workflow_dispatch: {}      # manual trigger
 
 permissions:
-  contents: write            # Required to allow the bot to commit files to the repo
+  contents: write            # critical for pushing news_feed.json
 
 concurrency:
   group: scrape-news-feed
-  cancel-in-progress: false  # Do not cancel to ensure file integrity during push
+  cancel-in-progress: false
 
 jobs:
   scrape:
@@ -21,7 +21,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0     # Fetch all history for all branches and tags
+          fetch-depth: 0     # Required for rebase/push
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -29,7 +29,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install dependencies
-        run: pip install --no-cache-dir --quiet yt-dlp google-genai
+        run: pip install --no-cache-dir yt-dlp google-genai
 
       - name: Run scraper + Gemini analysis
         env:
@@ -38,20 +38,13 @@ jobs:
 
       - name: Commit and Push news_feed.json
         run: |
-          # Configure Git
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          # Stage the file
           git add news_feed.json
-          
-          # Check if there are changes to commit
           if git diff --cached --quiet; then
-            echo "No changes in news_feed.json to commit."
+            echo "No changes to commit."
           else
             git commit -m "chore: refresh news_feed.json [skip ci]"
-            
-            # Pull latest changes to avoid conflicts, then push
             git pull --rebase origin main
             git push origin main
           fi
