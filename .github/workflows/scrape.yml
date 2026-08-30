@@ -6,11 +6,11 @@ on:
   workflow_dispatch: {}      # allow manual runs from the Actions tab
 
 permissions:
-  contents: write            # required to commit news_feed.json back
+  contents: write            # Required to allow the bot to commit files to the repo
 
 concurrency:
   group: scrape-news-feed
-  cancel-in-progress: false  # never kill a run partway through a commit
+  cancel-in-progress: false  # Do not cancel to ensure file integrity during push
 
 jobs:
   scrape:
@@ -20,14 +20,14 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0     # Fetch all history for all branches and tags
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      # No requirements.txt / caching layer on purpose — two small,
-      # dependency-light packages install in a few seconds either way.
       - name: Install dependencies
         run: pip install --no-cache-dir --quiet yt-dlp google-genai
 
@@ -36,14 +36,22 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python scraper.py
 
-      - name: Commit updated news_feed.json
+      - name: Commit and Push news_feed.json
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Configure Git
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Stage the file
           git add news_feed.json
+          
+          # Check if there are changes to commit
           if git diff --cached --quiet; then
-            echo "No changes to commit."
+            echo "No changes in news_feed.json to commit."
           else
             git commit -m "chore: refresh news_feed.json [skip ci]"
-            git push
+            
+            # Pull latest changes to avoid conflicts, then push
+            git pull --rebase origin main
+            git push origin main
           fi
