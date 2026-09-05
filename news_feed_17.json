@@ -1,8 +1,8 @@
 {
-  "title": "Malaria outbreak in Balaghat, death toll rise to 28+",
+  "title": "2 key demands from protesters in balaghat",
   "source": "Muskan Informs",
-  "urgency_score": 9,
-  "ground_truth": "A malaria outbreak in Balaghat has resulted in a death toll exceeding 28 individuals.",
-  "official_record": "The provided information indicates a severe malaria outbreak in Balaghat, with the death toll rising to over 28. The video is embedded from YouTube.",
-  "context_gap": "The report lacks crucial details such as the specific time frame of the outbreak, the affected villages or areas within Balaghat, demographic information of the deceased, measures being taken by local authorities or health organizations, and the current status of the outbreak (e.g., if it's contained or still spreading). There is no mention of the causes contributing to the outbreak's severity or any public health advisories issued."
+  "urgency_score": 6,
+  "ground_truth": "Protesters in Balaghat are making two key demands.",
+  "official_record": "The provided data includes a YouTube embed link for a video titled '2 key demands from protesters in balaghat' by 'Muskan Informs'. The video is hosted on YouTube with the URL https://www.youtube.com/watch?v=0zXqzVHj5dU.",
+  "context_gap": "The specific nature of the two key demands from the protesters is not mentioned. The identity of the protesters (e.g., Adivasi community as suggested by the hashtag) and the reasons behind their protest are also missing. The location is specified as Balaghat, but further geographical context or the specific site of the protest is absent. There is no information on the government's response or any official statements regarding these demands."
 }
